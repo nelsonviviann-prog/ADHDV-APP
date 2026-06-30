@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.DS_Store
+*.log
+
+# Local SQLite database (regenerated per device)
+data/*.db
+data/smoke_test_report.pdf
+
+# Streamlit secrets (never commit)
+.streamlit/secrets.toml

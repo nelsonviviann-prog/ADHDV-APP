@@ -1,0 +1,13 @@
+[theme]
+base = "light"
+primaryColor = "#0f766e"           # teal-700 -- main CTA + active nav
+backgroundColor = "#f8fafc"        # slate-50 -- soft, low-eye-strain
+secondaryBackgroundColor = "#ffffff"
+textColor = "#0f172a"              # slate-900
+font = "sans serif"
+
+[browser]
+gatherUsageStats = false
+
+[server]
+headless = true
