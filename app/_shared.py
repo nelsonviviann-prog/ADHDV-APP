@@ -99,13 +99,18 @@ def render_sidebar_role_widget() -> None:
     role = current_role()
     with st.sidebar:
         if role:
+            verified_badge = (
+                " &middot; <span style='color:#166534;'>verified</span>"
+                if role == ROLE_CLINICIAN and is_clinician_authed()
+                else ""
+            )
             st.markdown(
-                f"<div style='padding:10px 12px; background:#fafaf9; border:1px solid #e7e5e4; "
-                f"border-radius:4px; margin-bottom:14px; font-size:13px;'>"
-                f"<span style='color:#57534e;'>Signed in as</span><br>"
+                "<div style='padding:10px 12px; background:#fafaf9; border:1px solid #e7e5e4; "
+                "border-radius:4px; margin-bottom:14px; font-size:13px;'>"
+                "<span style='color:#57534e;'>Signed in as</span><br>"
                 f"<b style='color:#1e3a8a;'>{role}</b>"
-                f"{' &middot; <span style=\"color:#166534;\">verified</span>' if role == ROLE_CLINICIAN and is_clinician_authed() else ''}"
-                f"</div>",
+                f"{verified_badge}"
+                "</div>",
                 unsafe_allow_html=True,
             )
             if st.button("Switch role / Sign out", use_container_width=True, key="sb_switch_role"):
