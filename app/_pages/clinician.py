@@ -101,20 +101,29 @@ st.divider()
 
 
 def _render_audit_log() -> None:
-    activity = db.recent_activity(limit=30)
+    # Defensive wrapper: a broken audit log should NEVER take down the rest
+    # of the dashboard. If anything fails (missing column on an old DB
+    # schema, Streamlit API change, anything), show the rest of the page.
+    try:
+        activity = db.recent_activity(limit=30)
+    except Exception as exc:
+        st.caption(f"(Audit log unavailable: {type(exc).__name__})")
+        return
     if not activity:
         return
-    with st.expander(f"Audit log — last {len(activity)} clinician action(s)", expanded=False):
-        st.dataframe(
-            pd.DataFrame([{
-                "When (UTC)": a["occurred_at"],
-                "Clinician": a["clinician_name"],
-                "Action": a["action"],
-                "Study ID": a["target_study_id"] or "—",
-            } for a in activity]),
-            use_container_width=True,
-            hide_index=True,
-        )
+    try:
+        rows = []
+        for a in activity:
+            rows.append({
+                "When (UTC)": a["occurred_at"] if "occurred_at" in a.keys() else "-",
+                "Clinician":  a["clinician_name"] if "clinician_name" in a.keys() else "-",
+                "Action":     a["action"] if "action" in a.keys() else "-",
+                "Study ID":   (a["target_study_id"] if "target_study_id" in a.keys() else None) or "-",
+            })
+        with st.expander(f"Audit log - last {len(rows)} clinician action(s)", expanded=False):
+            st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+    except Exception as exc:
+        st.caption(f"(Audit log render failed: {type(exc).__name__}: {exc})")
 
 
 # ---------- Detail view for a chosen Study ID ----------
