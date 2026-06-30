@@ -41,10 +41,11 @@ from src.scoring import (                      # noqa: E402
 
 
 RISK_COLORS = {
-    "Low Risk": "#16a34a",
-    "Moderate Risk": "#d97706",
-    "High Risk": "#dc2626",
+    "Low Risk": "#166534",       # forest-800 -- calmer than the previous bright green
+    "Moderate Risk": "#b45309",  # amber-700  -- editorial amber, not warning-yellow
+    "High Risk": "#991b1b",      # crimson-900 -- serious, not alarming-red
 }
+ACCENT_COLOR = "#1e3a8a"         # navy-900   -- primary brand colour
 
 
 @st.cache_resource
@@ -80,18 +81,33 @@ def header(active_label: str | None = None) -> None:
         """
         <style>
         section.main > div { padding-top: 1.2rem; }
+        h1, h2, h3, h4 { font-family: Georgia, 'Times New Roman', serif !important;
+                         letter-spacing: -0.01em; }
         .pill {
-            display: inline-block; padding: 4px 10px; border-radius: 999px;
-            font-size: 12px; font-weight: 600; letter-spacing: 0.03em;
+            display: inline-block; padding: 4px 12px; border-radius: 4px;
+            font-size: 12px; font-weight: 600; letter-spacing: 0.04em;
+            text-transform: uppercase;
         }
-        .risk-pill-low      { background: #dcfce7; color: #166534; }
-        .risk-pill-moderate { background: #fef3c7; color: #92400e; }
-        .risk-pill-high     { background: #fee2e2; color: #991b1b; }
+        .risk-pill-low      { background: #ecfdf5; color: #166534; border: 1px solid #bbf7d0; }
+        .risk-pill-moderate { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+        .risk-pill-high     { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
         .info-card {
-            background: #fff; border: 1px solid #e2e8f0;
-            border-left: 4px solid #0f766e; padding: 14px 18px;
-            border-radius: 6px; margin: 8px 0;
+            background: #ffffff; border: 1px solid #e7e5e4;
+            border-left: 4px solid #1e3a8a; padding: 18px 22px;
+            border-radius: 4px; margin: 10px 0;
         }
+        /* hero role-card */
+        .role-card {
+            background: #ffffff; border: 1px solid #e7e5e4;
+            border-top: 3px solid #1e3a8a; padding: 22px 22px;
+            border-radius: 4px; height: 180px;
+            box-shadow: 0 1px 2px rgba(28,25,23,0.04);
+        }
+        .role-card h4 { margin-top: 0; color: #1e3a8a;
+                        font-family: Georgia, serif; font-size: 18px; }
+        .role-card p  { color: #44403c; margin-bottom: 0; line-height: 1.55; }
+        /* sidebar tweaks */
+        section[data-testid="stSidebar"] { border-right: 1px solid #e7e5e4; }
         </style>
         """,
         unsafe_allow_html=True,
@@ -103,6 +119,53 @@ def header(active_label: str | None = None) -> None:
 def risk_pill(risk_level: str) -> str:
     cls = "low" if "Low" in risk_level else "high" if "High" in risk_level else "moderate"
     return f'<span class="pill risk-pill-{cls}">{risk_level}</span>'
+
+
+def app_banner() -> None:
+    """Editorial-Navy hero banner. Renders once at the top of the landing page."""
+    st.markdown(
+        """
+        <div style="
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e293b 100%);
+            color: #fafaf9;
+            padding: 38px 44px 32px 44px;
+            border-radius: 6px;
+            margin: 0 0 28px 0;
+            border-bottom: 3px solid #b45309;
+            box-shadow: 0 2px 8px rgba(28,25,23,0.08);
+        ">
+            <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:24px; flex-wrap:wrap;">
+                <div style="flex:1; min-width:280px;">
+                    <div style="font-size:11px; letter-spacing:0.18em; text-transform:uppercase;
+                                opacity:0.75; margin-bottom:8px;">
+                        Master's Capstone Research Project &middot; Nigeria
+                    </div>
+                    <h1 style="font-family:Georgia, 'Times New Roman', serif; font-weight:700;
+                                font-size:34px; line-height:1.15; margin:0 0 10px 0; color:#fafaf9;">
+                        Early Detection of ADHD<br>
+                        <span style="opacity:0.85; font-weight:400;">in the Nigerian Pediatric Population</span>
+                    </h1>
+                    <div style="font-size:14px; opacity:0.85; line-height:1.5; max-width:640px;">
+                        A non-diagnostic screening and referral support tool for parents,
+                        teachers, and primary health workers. DSM-5 aligned &middot; NICHQ
+                        Vanderbilt-adapted &middot; covers all 36 states and the FCT.
+                    </div>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:8px; align-items:flex-end;">
+                    <span style="background:#b45309; color:#fafaf9; padding:6px 12px; border-radius:4px;
+                                 font-size:11px; letter-spacing:0.08em; text-transform:uppercase; font-weight:600;">
+                        Screening &middot; Not Diagnosis
+                    </span>
+                    <span style="background:rgba(250,250,249,0.15); color:#fafaf9; padding:6px 12px;
+                                 border-radius:4px; font-size:11px; letter-spacing:0.05em;">
+                        Ages 4 &ndash; 15
+                    </span>
+                </div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 def render_demographics_block(

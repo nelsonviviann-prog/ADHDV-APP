@@ -1,10 +1,11 @@
 [theme]
 base = "light"
-primaryColor = "#0f766e"           # teal-700 -- main CTA + active nav
-backgroundColor = "#f8fafc"        # slate-50 -- soft, low-eye-strain
-secondaryBackgroundColor = "#ffffff"
-textColor = "#0f172a"              # slate-900
-font = "sans serif"
+# Editorial Navy palette -- chosen for clinical gravitas (Lancet / NYT / NHS feel).
+primaryColor = "#1e3a8a"              # navy-900 -- CTAs, active nav, links
+backgroundColor = "#fafaf9"           # warm off-white (stone-50) -- page background
+secondaryBackgroundColor = "#ffffff"  # pure white -- sidebar + cards
+textColor = "#1c1917"                 # stone-900 -- body text
+font = "sans serif"                   # body stays sans; CSS rule above applies Georgia serif to headings only (editorial pattern)
 
 [browser]
 gatherUsageStats = false

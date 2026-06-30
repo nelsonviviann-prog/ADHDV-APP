@@ -24,12 +24,13 @@ from .hospitals import Hospital, referral_recommendations
 from .scoring import ScreeningResult, cross_informant_agreement
 
 
-PRIMARY = colors.HexColor("#0f766e")  # teal-700
-ACCENT = colors.HexColor("#1d4ed8")   # blue-700
-HIGH = colors.HexColor("#dc2626")     # red-600
-MOD = colors.HexColor("#d97706")      # amber-600
-LOW = colors.HexColor("#16a34a")      # green-600
-MUTED = colors.HexColor("#475569")    # slate-600
+# Editorial Navy palette -- matches Streamlit theme.
+PRIMARY = colors.HexColor("#1e3a8a")  # navy-900   -- headings, table headers
+ACCENT = colors.HexColor("#7c2d12")   # burgundy   -- secondary emphasis
+HIGH = colors.HexColor("#991b1b")     # crimson-900
+MOD = colors.HexColor("#b45309")      # amber-700
+LOW = colors.HexColor("#166534")      # forest-800
+MUTED = colors.HexColor("#57534e")    # stone-600  -- body / metadata
 
 
 def _risk_color(risk_level: str):
