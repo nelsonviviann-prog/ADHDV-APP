@@ -16,13 +16,23 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from _shared import (  # noqa: E402
     RISK_COLORS,
+    ROLE_CLINICIAN,
+    current_role,
     ensure_model_present,
     header,
+    is_clinician_authed,
     render_pdf_download,
     risk_pill,
 )
 from src import database as db                                  # noqa: E402
 from src.scoring import cross_informant_agreement, score        # noqa: E402
+
+# Server-side gate: hide the dashboard from anyone who isn't a verified
+# Clinician — even if they bookmark or guess the /clinician URL.
+if current_role() != ROLE_CLINICIAN or not is_clinician_authed():
+    st.error("Clinician access required. Returning you to Home.")
+    st.switch_page("_pages/home.py")
+    st.stop()
 
 header("Clinician Dashboard")
 ensure_model_present()

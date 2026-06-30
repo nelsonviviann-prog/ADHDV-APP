@@ -47,6 +47,79 @@ RISK_COLORS = {
 }
 ACCENT_COLOR = "#1e3a8a"         # navy-900   -- primary brand colour
 
+# ---------------------------------------------------------------------------
+# Role + auth helpers
+# ---------------------------------------------------------------------------
+
+ROLE_PARENT = "Parent"
+ROLE_TEACHER = "Teacher"
+ROLE_CLINICIAN = "Clinician"
+ALL_ROLES = (ROLE_PARENT, ROLE_TEACHER, ROLE_CLINICIAN)
+
+
+def current_role() -> str | None:
+    return st.session_state.get("role")
+
+
+def set_role(role: str) -> None:
+    st.session_state["role"] = role
+
+
+def clear_role() -> None:
+    st.session_state.pop("role", None)
+    st.session_state.pop("clinician_authed", None)
+
+
+def clinician_passcode() -> str:
+    """Resolve the clinician passcode from Streamlit Cloud secrets, or a
+    development default with a visible warning. Set the secret in production
+    via Streamlit Cloud > App > Settings > Secrets:
+
+        clinician_passcode = "your-strong-passcode"
+    """
+    try:
+        return st.secrets["clinician_passcode"]
+    except (KeyError, FileNotFoundError, Exception):
+        return "adhd-2026"
+
+
+def is_clinician_authed() -> bool:
+    return bool(st.session_state.get("clinician_authed"))
+
+
+def verify_clinician(entered: str) -> bool:
+    if entered and entered == clinician_passcode():
+        st.session_state["clinician_authed"] = True
+        return True
+    return False
+
+
+def render_sidebar_role_widget() -> None:
+    """Show the active role and a Switch-role button at the top of the sidebar."""
+    role = current_role()
+    with st.sidebar:
+        if role:
+            st.markdown(
+                f"<div style='padding:10px 12px; background:#fafaf9; border:1px solid #e7e5e4; "
+                f"border-radius:4px; margin-bottom:14px; font-size:13px;'>"
+                f"<span style='color:#57534e;'>Signed in as</span><br>"
+                f"<b style='color:#1e3a8a;'>{role}</b>"
+                f"{' &middot; <span style=\"color:#166534;\">verified</span>' if role == ROLE_CLINICIAN and is_clinician_authed() else ''}"
+                f"</div>",
+                unsafe_allow_html=True,
+            )
+            if st.button("Switch role / Sign out", use_container_width=True, key="sb_switch_role"):
+                clear_role()
+                st.switch_page("streamlit_app.py")
+        else:
+            st.markdown(
+                "<div style='padding:10px 12px; background:#fafaf9; border:1px solid #e7e5e4; "
+                "border-radius:4px; margin-bottom:14px; font-size:13px; color:#57534e;'>"
+                "Pick a role on the <b>Home</b> page to begin."
+                "</div>",
+                unsafe_allow_html=True,
+            )
+
 
 @st.cache_resource
 def load_model():
@@ -71,12 +144,8 @@ def ensure_model_present() -> tuple[object, dict]:
 
 
 def header(active_label: str | None = None) -> None:
-    st.set_page_config(
-        page_title="ADHD Screening - Nigerian Pediatric Tool",
-        page_icon=":brain:",
-        layout="wide",
-        initial_sidebar_state="expanded",
-    )
+    # NOTE: set_page_config now lives in streamlit_app.py (the entry script)
+    # because st.navigation requires it to run exactly once at the top.
     st.markdown(
         """
         <style>
