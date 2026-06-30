@@ -25,6 +25,23 @@ from _shared import (  # noqa: E402
 )
 
 header()
+
+# ---------------------------------------------------------------------------
+# One-shot auto-redirect: when the user clicks "Continue as <role>" or finishes
+# the clinician passcode form, we set this session flag and st.rerun(). The
+# rerun re-executes streamlit_app.py's build_pages() with the new role, which
+# REGISTERS the corresponding page in st.navigation. Only then can we safely
+# call st.switch_page -- doing it inside the button handler would fail because
+# the target page wasn't registered in the nav at that point.
+# ---------------------------------------------------------------------------
+_just_picked = st.session_state.pop("_just_picked_role", None)
+if _just_picked == ROLE_PARENT:
+    st.switch_page("_pages/parent.py")
+elif _just_picked == ROLE_TEACHER:
+    st.switch_page("_pages/teacher.py")
+elif _just_picked == ROLE_CLINICIAN and is_clinician_authed():
+    st.switch_page("_pages/clinician.py")
+
 app_banner()
 
 role = current_role()
@@ -55,7 +72,8 @@ if role is None:
         if st.button("Continue as Parent", type="primary",
                      use_container_width=True, key="pick_parent"):
             set_role(ROLE_PARENT)
-            st.switch_page("_pages/parent.py")
+            st.session_state["_just_picked_role"] = ROLE_PARENT
+            st.rerun()
 
     with c2:
         st.markdown(
@@ -69,7 +87,8 @@ if role is None:
         if st.button("Continue as Teacher", type="primary",
                      use_container_width=True, key="pick_teacher"):
             set_role(ROLE_TEACHER)
-            st.switch_page("_pages/teacher.py")
+            st.session_state["_just_picked_role"] = ROLE_TEACHER
+            st.rerun()
 
     with c3:
         st.markdown(
@@ -113,8 +132,9 @@ elif role == ROLE_CLINICIAN and not is_clinician_authed():
 
     if submit:
         if verify_clinician(pw):
+            st.session_state["_just_picked_role"] = ROLE_CLINICIAN
             st.success("Verified — opening Clinician Dashboard...")
-            st.switch_page("_pages/clinician.py")
+            st.rerun()
         else:
             st.error("Incorrect passcode. Try again or pick a different role.")
 

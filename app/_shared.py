@@ -115,7 +115,8 @@ def render_sidebar_role_widget() -> None:
             )
             if st.button("Switch role / Sign out", use_container_width=True, key="sb_switch_role"):
                 clear_role()
-                st.switch_page("streamlit_app.py")
+                # Home is always registered, the entry script is not a "page".
+                st.switch_page("_pages/home.py")
         else:
             st.markdown(
                 "<div style='padding:10px 12px; background:#fafaf9; border:1px solid #e7e5e4; "
