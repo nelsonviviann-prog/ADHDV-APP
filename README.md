@@ -115,8 +115,46 @@ All 36 Nigerian states + FCT mapped to nearest tertiary mental-health facility. 
 3. State Teaching Hospital.
 4. Falls back to nearest hospital in the same geopolitical zone if none in-state.
 
+## Clinician access — onboarding & revocation
+
+Clinicians access the dashboard via a **personal access code** (e.g. `dr-adekoya-7a3b9c`). Each code maps to a named clinician; every action they take in the dashboard is logged with their name in an audit table.
+
+### Generate a new clinician code
+
+```powershell
+python -m scripts.new_clinician_code "Dr. Adekoya"
+```
+
+The script prints a TOML line ready to paste.
+
+### Register the code (production)
+
+1. Streamlit Cloud → your app → ⋮ menu → **Settings → Secrets**.
+2. Add (or extend) the `[clinician_accounts]` block:
+
+   ```toml
+   [clinician_accounts]
+   "dr-adekoya-7a3b9c"    = "Dr. Adekoya"
+   "nurse-okonkwo-4f8e2d" = "Nurse Okonkwo"
+   ```
+
+3. Click **Save**. Secrets reload live; no redeploy needed.
+
+### Send the code
+
+WhatsApp / SMS / email the code to the clinician. They enter it at the **Clinician access code** field on the Home page.
+
+### Revoke a clinician
+
+Delete their line from the `[clinician_accounts]` block and click **Save**. The code is invalid immediately.
+
+### Development fallback
+
+If no `clinician_accounts` block is set, the app falls back to a single dev code `adhd-2026` mapped to "Dev Clinician" and shows a visible warning on the passcode page. Replace before sharing publicly.
+
 ## Privacy
 
-- No PII leaves the device. Only first/last initial + Study ID are stored.
-- SQLite database lives at `data/screening_sessions.db`.
+- No PII leaves the deployment. Only first/last initial + Study ID are stored per child.
+- Clinician audit log records: clinician name, action (`sign_in` / `view_dashboard` / `view_study`), target Study ID (when applicable), and UTC timestamp.
+- SQLite database lives at `data/screening_sessions.db` (local) or in the Streamlit Cloud container (ephemeral; resets on every redeploy).
 - The trained model runs locally; no cloud, no telemetry, no analytics.

@@ -1,6 +1,7 @@
 """
 Clinician dashboard - lookup any Study ID, review parent + teacher screenings
-side by side, view longitudinal sessions, download the PDF report.
+side by side, view longitudinal sessions, download the PDF report. Every
+action is logged to the audit table tagged with the verified clinician's name.
 """
 
 from __future__ import annotations
@@ -17,10 +18,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from _shared import (  # noqa: E402
     RISK_COLORS,
     ROLE_CLINICIAN,
+    clinician_name,
     current_role,
     ensure_model_present,
     header,
     is_clinician_authed,
+    log_clinician_action,
     render_pdf_download,
     risk_pill,
 )
@@ -38,9 +41,25 @@ header("Clinician Dashboard")
 ensure_model_present()
 db.init_db()
 
+# Log the dashboard view once per session (avoids spamming the audit log on
+# every rerun caused by widget interactions).
+if not st.session_state.get("_logged_dashboard_view"):
+    log_clinician_action("view_dashboard")
+    st.session_state["_logged_dashboard_view"] = True
+
+# ---------- Greeting ----------
+name = clinician_name() or "Clinician"
+st.markdown(
+    f"<div class='info-card' style='border-left-color:#166534;'>"
+    f"<b style='font-family:Georgia,serif; font-size:18px;'>Welcome, {name}.</b><br>"
+    f"<span style='color:#57534e;'>Every action you take on this page is recorded "
+    f"in the audit log tagged with your name.</span></div>",
+    unsafe_allow_html=True,
+)
+
 st.write(
-    "Look up a child's Study ID to see all parent and teacher screenings "
-    "saved on this device, the cross-informant agreement, and download the "
+    "Look up a child's Study ID to see all parent and teacher screenings saved "
+    "on this deployment, the cross-informant agreement, and download the "
     "clinician PDF report."
 )
 
@@ -58,10 +77,10 @@ def _result_from_row(row: dict):
 
 
 # ---------- Recent sessions browser ----------
-st.markdown("### Recent screenings on this device")
+st.markdown("### Recent screenings on this deployment")
 recent = db.recent_sessions(limit=25)
 if not recent:
-    st.info("No screenings saved yet. Use the Parent or Teacher pages to add one.")
+    st.info("No screenings saved yet. A parent or teacher must submit one first.")
 else:
     rows = []
     for s in recent:
@@ -80,14 +99,40 @@ else:
 
 st.divider()
 
+
+def _render_audit_log() -> None:
+    activity = db.recent_activity(limit=30)
+    if not activity:
+        return
+    with st.expander(f"Audit log — last {len(activity)} clinician action(s)", expanded=False):
+        st.dataframe(
+            pd.DataFrame([{
+                "When (UTC)": a["occurred_at"],
+                "Clinician": a["clinician_name"],
+                "Action": a["action"],
+                "Study ID": a["target_study_id"] or "—",
+            } for a in activity]),
+            use_container_width=True,
+            hide_index=True,
+        )
+
+
 # ---------- Detail view for a chosen Study ID ----------
 if not study_id:
+    _render_audit_log()
     st.stop()
 
 child = db.find_child(study_id)
 if not child:
-    st.error(f"No child with Study ID **{study_id}** on this device.")
+    st.error(f"No child with Study ID **{study_id}** on this deployment.")
+    _render_audit_log()
     st.stop()
+
+# Log the lookup (only on first lookup of this Study ID in this session).
+_lookup_flag = f"_logged_view_{study_id}"
+if not st.session_state.get(_lookup_flag):
+    log_clinician_action("view_study", target_study_id=study_id)
+    st.session_state[_lookup_flag] = True
 
 st.markdown(f"### Profile - Study ID `{child['study_id']}`")
 prof_cols = st.columns(5)
@@ -100,6 +145,7 @@ prof_cols[4].metric("Initials", f"{child['first_name_initial']}.{child['last_nam
 sessions = db.sessions_for_child(child["id"])
 if not sessions:
     st.warning("Profile exists but has no screening sessions yet.")
+    _render_audit_log()
     st.stop()
 
 st.markdown(f"### Longitudinal sessions ({len(sessions)})")
@@ -121,6 +167,7 @@ parent_row, teacher_row = db.latest_parent_and_teacher(child["id"])
 st.markdown("### Cross-informant view (most recent of each rater)")
 col_p, col_t = st.columns(2)
 
+
 def _render_side(col, row, label):
     with col:
         st.markdown(f"#### {label}")
@@ -139,13 +186,14 @@ def _render_side(col, row, label):
                     st.write(f"**[{f['severity']}] {f['domain']}** - {f['message']}")
         return res
 
+
 p_res = _render_side(col_p, parent_row, "Parent rating")
 t_res = _render_side(col_t, teacher_row, "Teacher rating")
 
 if p_res and t_res:
     st.markdown("### Agreement")
     agreement = cross_informant_agreement(p_res, t_res)
-    color = RISK_COLORS.get(p_res.risk_level, "#0f766e")
+    color = RISK_COLORS.get(p_res.risk_level, "#1e3a8a")
     st.markdown(
         f"<div style='padding:14px;border-radius:6px;border:2px solid {color};"
         f"background:{color}10;'><b>{agreement['agreement']}</b> | "
@@ -159,3 +207,10 @@ if p_res and t_res:
 st.divider()
 st.markdown("### Generate clinician PDF report")
 render_pdf_download(child, parent_result=p_res, teacher_result=t_res)
+# NOTE: Streamlit's st.download_button fires client-side without a server
+# round-trip, so a true "downloaded" event isn't reliably catchable from
+# Python. The earlier view_study log already captures the meaningful
+# clinician action (they opened this Study ID and saw the PDF button).
+
+st.divider()
+_render_audit_log()

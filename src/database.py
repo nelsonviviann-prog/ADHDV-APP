@@ -75,6 +75,16 @@ CREATE TABLE IF NOT EXISTS screening_sessions (
 
 CREATE INDEX IF NOT EXISTS idx_sessions_child ON screening_sessions(child_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_completed ON screening_sessions(completed_at);
+
+CREATE TABLE IF NOT EXISTS clinician_activity (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    clinician_name TEXT NOT NULL,
+    action TEXT NOT NULL,          -- 'sign_in' | 'view_study' | 'download_pdf' | 'view_dashboard'
+    target_study_id TEXT,          -- nullable; the Study ID acted on (if applicable)
+    occurred_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_activity_when ON clinician_activity(occurred_at);
+CREATE INDEX IF NOT EXISTS idx_activity_who ON clinician_activity(clinician_name);
 """
 
 
@@ -216,6 +226,32 @@ def recent_sessions(limit: int = 50) -> list[dict]:
             "SELECT s.*, c.study_id, c.age, c.gender, c.school_level, c.state "
             "FROM screening_sessions s JOIN children c ON c.id = s.child_id "
             "ORDER BY s.completed_at DESC LIMIT ?",
+            (limit,),
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+
+# ---------------------------------------------------------------------------
+# Clinician activity audit log
+# ---------------------------------------------------------------------------
+
+def log_activity(
+    *, clinician_name: str, action: str, target_study_id: str | None = None
+) -> None:
+    init_db()
+    with connect() as conn:
+        conn.execute(
+            "INSERT INTO clinician_activity (clinician_name, action, target_study_id, occurred_at) "
+            "VALUES (?,?,?,?)",
+            (clinician_name, action, target_study_id, _now()),
+        )
+
+
+def recent_activity(limit: int = 30) -> list[dict]:
+    init_db()
+    with connect() as conn:
+        rows = conn.execute(
+            "SELECT * FROM clinician_activity ORDER BY occurred_at DESC LIMIT ?",
             (limit,),
         ).fetchall()
         return [dict(r) for r in rows]

@@ -68,30 +68,97 @@ def set_role(role: str) -> None:
 def clear_role() -> None:
     st.session_state.pop("role", None)
     st.session_state.pop("clinician_authed", None)
+    st.session_state.pop("clinician_name", None)
 
 
-def clinician_passcode() -> str:
-    """Resolve the clinician passcode from Streamlit Cloud secrets, or a
-    development default with a visible warning. Set the secret in production
-    via Streamlit Cloud > App > Settings > Secrets:
+# ---------------------------------------------------------------------------
+# Clinician access -- multiple named codes
+# ---------------------------------------------------------------------------
+# Each clinician gets a unique code that maps to their name. Codes live in
+# Streamlit Cloud Secrets (or .streamlit/secrets.toml locally), in this shape:
+#
+#     [clinician_accounts]
+#     "dr-adekoya-7a3b9c"    = "Dr. Adekoya"
+#     "nurse-okonkwo-4f8e2d" = "Nurse Okonkwo"
+#
+# If `clinician_accounts` is unset, the deployment falls back to a single
+# development code "adhd-2026" mapped to "Dev Clinician" and shows a visible
+# warning on the passcode page.
+# ---------------------------------------------------------------------------
 
-        clinician_passcode = "your-strong-passcode"
+DEV_FALLBACK_CODE = "adhd-2026"
+DEV_FALLBACK_NAME = "Dev Clinician"
+
+
+def _clinician_accounts() -> dict[str, str]:
+    """Return {code: clinician_name}. Resolution order:
+       1. st.secrets['clinician_accounts'] -- preferred, multi-clinician
+       2. st.secrets['clinician_passcode'] -- legacy single code
+       3. DEV_FALLBACK_CODE -- only when no secret is configured
     """
     try:
-        return st.secrets["clinician_passcode"]
+        accounts = st.secrets.get("clinician_accounts")
+        if accounts:
+            return {str(k): str(v) for k, v in dict(accounts).items()}
     except (KeyError, FileNotFoundError, Exception):
-        return "adhd-2026"
+        pass
+
+    try:
+        legacy = st.secrets.get("clinician_passcode")
+        if legacy:
+            return {str(legacy): "Clinician"}
+    except (KeyError, FileNotFoundError, Exception):
+        pass
+
+    return {DEV_FALLBACK_CODE: DEV_FALLBACK_NAME}
 
 
 def is_clinician_authed() -> bool:
     return bool(st.session_state.get("clinician_authed"))
 
 
+def clinician_name() -> str | None:
+    return st.session_state.get("clinician_name")
+
+
+def is_dev_passcode_in_use() -> bool:
+    """True when no secret is set and the dev fallback is the only code."""
+    accounts = _clinician_accounts()
+    return accounts == {DEV_FALLBACK_CODE: DEV_FALLBACK_NAME}
+
+
 def verify_clinician(entered: str) -> bool:
-    if entered and entered == clinician_passcode():
-        st.session_state["clinician_authed"] = True
-        return True
-    return False
+    """Try to verify the entered code against the configured clinician list.
+    On success, set session state (authed + name) and log a sign-in.
+    """
+    if not entered:
+        return False
+    entered = entered.strip()
+    accounts = _clinician_accounts()
+    if entered not in accounts:
+        return False
+
+    name = accounts[entered]
+    st.session_state["clinician_authed"] = True
+    st.session_state["clinician_name"] = name
+    log_clinician_action("sign_in")
+    return True
+
+
+def log_clinician_action(action: str, target_study_id: str | None = None) -> None:
+    """Append an audit-log entry tagged with the verified clinician's name.
+    Silent no-op if the caller is not a verified clinician.
+    """
+    name = clinician_name()
+    if not name:
+        return
+    try:
+        db.log_activity(
+            clinician_name=name, action=action, target_study_id=target_study_id
+        )
+    except Exception:
+        # Don't let logging break the page; swallow silently.
+        pass
 
 
 def render_sidebar_role_widget() -> None:
@@ -99,8 +166,20 @@ def render_sidebar_role_widget() -> None:
     role = current_role()
     with st.sidebar:
         if role:
+            # For verified clinicians, show their actual name (e.g. "Dr. Adekoya")
+            # instead of the generic "Clinician".
+            display_name = (
+                clinician_name()
+                if role == ROLE_CLINICIAN and is_clinician_authed()
+                else role
+            )
             verified_badge = (
                 " &middot; <span style='color:#166534;'>verified</span>"
+                if role == ROLE_CLINICIAN and is_clinician_authed()
+                else ""
+            )
+            role_subtitle = (
+                "<div style='color:#78716c; font-size:11px; margin-top:2px;'>Clinician</div>"
                 if role == ROLE_CLINICIAN and is_clinician_authed()
                 else ""
             )
@@ -108,8 +187,9 @@ def render_sidebar_role_widget() -> None:
                 "<div style='padding:10px 12px; background:#fafaf9; border:1px solid #e7e5e4; "
                 "border-radius:4px; margin-bottom:14px; font-size:13px;'>"
                 "<span style='color:#57534e;'>Signed in as</span><br>"
-                f"<b style='color:#1e3a8a;'>{role}</b>"
+                f"<b style='color:#1e3a8a;'>{display_name}</b>"
                 f"{verified_badge}"
+                f"{role_subtitle}"
                 "</div>",
                 unsafe_allow_html=True,
             )

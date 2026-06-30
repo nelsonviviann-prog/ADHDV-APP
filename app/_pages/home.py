@@ -16,10 +16,10 @@ from _shared import (  # noqa: E402
     ROLE_TEACHER,
     app_banner,
     clear_role,
-    clinician_passcode,
     current_role,
     header,
     is_clinician_authed,
+    is_dev_passcode_in_use,
     set_role,
     verify_clinician,
 )
@@ -111,15 +111,22 @@ elif role == ROLE_CLINICIAN and not is_clinician_authed():
     st.markdown("### Clinician access")
     st.markdown(
         "<div class='info-card' style='border-left-color:#166534;'>"
-        "<b>Clinician dashboard is passcode-protected.</b><br>"
-        "It shows every screening session saved on this deployment, including "
-        "study IDs and rater contact details. Enter the passcode to continue."
+        "<b>Clinician dashboard is access-coded.</b><br>"
+        "Every clinician has a personal access code that maps to their name. "
+        "Ask the deployment owner for your code. All actions you take in the "
+        "dashboard are logged with your name."
         "</div>",
         unsafe_allow_html=True,
     )
 
     with st.form("clinician_auth"):
-        pw = st.text_input("Clinician passcode", type="password", autocomplete="off")
+        pw = st.text_input(
+            "Clinician access code",
+            type="password",
+            autocomplete="off",
+            placeholder="e.g. dr-adekoya-7a3b9c",
+            help="A personal code given to you by the deployment owner.",
+        )
         col_a, col_b = st.columns([1, 5])
         with col_a:
             submit = st.form_submit_button("Sign in", type="primary")
@@ -136,13 +143,15 @@ elif role == ROLE_CLINICIAN and not is_clinician_authed():
             st.success("Verified — opening Clinician Dashboard...")
             st.rerun()
         else:
-            st.error("Incorrect passcode. Try again or pick a different role.")
+            st.error("That code isn't on file. Check the code with the deployment owner, "
+                     "or pick a different role.")
 
-    # Tiny hint only when the deployment is still on the dev passcode
-    if clinician_passcode() == "adhd-2026":
+    if is_dev_passcode_in_use():
         st.caption(
-            "⚠️ Deployment is using the **development passcode**. The owner should set "
-            "`clinician_passcode` in Streamlit Cloud → App settings → Secrets before sharing widely."
+            "⚠️ Deployment is using the **development access code** "
+            "(`adhd-2026` → 'Dev Clinician'). The owner should configure real "
+            "`clinician_accounts` in Streamlit Cloud → App settings → Secrets "
+            "before sharing widely. See README for the TOML format."
         )
 
 
