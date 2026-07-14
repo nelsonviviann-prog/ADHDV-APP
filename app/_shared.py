@@ -22,10 +22,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from src import config as cfg                  # noqa: E402
 from src import database as db                 # noqa: E402
-from src.hospitals import (                    # noqa: E402
-    NIGERIAN_STATES_AND_FCT,
-    referral_recommendations,
-)
+from src.hospitals import NIGERIAN_STATES_AND_FCT  # noqa: E402
 from src.instruments import (                  # noqa: E402
     FORM_INTRO_PARENT,
     FORM_INTRO_TEACHER,
@@ -34,6 +31,11 @@ from src.instruments import (                  # noqa: E402
     teacher_form,
 )
 from src.pdf_report import build_pdf           # noqa: E402
+from src.recommendations import (              # noqa: E402
+    guidance_for,
+    referrals_for,
+    shows_referrals,
+)
 from src.scoring import (                      # noqa: E402
     cross_informant_agreement,
     score as score_responses,
@@ -470,29 +472,58 @@ def render_result(result, ml_risk: str, ml_probs: dict, child: dict, rater_type:
     ).set_index("Risk Level")
     st.bar_chart(proba_df)
 
-    st.markdown("#### Recommended referrals (nearest tertiary facilities)")
-    refs = referral_recommendations(child["state"])
-    if not refs:
-        st.warning(f"No tertiary hospital configured for {child['state']}. Consult the nearest Federal Medical Centre.")
-    else:
-        rows = [{
-            "Hospital": f"{h.name} ({h.abbreviation})",
-            "City": h.city,
-            "State": h.state,
-            "Type": {
-                "federal_neuro_psychiatric": "Federal Neuro-Psychiatric",
-                "federal_teaching": "Federal Teaching",
-                "state_teaching": "State Teaching",
-                "specialist": "Specialist",
-            }.get(h.kind, h.kind),
-        } for h in refs]
-        st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+    render_next_steps(result.risk_level, child)
 
     st.warning(
         "**Reminder:** Screening result only - NOT a diagnosis. ADHD diagnosis "
         "requires direct evaluation by a qualified child psychiatrist or "
         "pediatrician. Bring the downloaded report with you to the referral."
     )
+
+
+def render_next_steps(risk_level: str, child: dict) -> None:
+    """Recommended next steps for this risk level.
+
+    Hospital referrals are rendered for HIGH RISK ONLY -- see src.recommendations
+    for why. Moderate and Low get monitoring / developmental guidance instead.
+    """
+    g = guidance_for(risk_level)
+
+    st.markdown(f"#### Recommended next steps - {g['headline']}")
+    st.markdown(
+        f"<div class='info-card' style='border-left-color:{RISK_COLORS.get(risk_level, ACCENT_COLOR)};'>"
+        f"<b>{risk_level} &middot; {g['headline']}</b><br>"
+        f"<span style='color:#44403c;'>{g['summary']}</span></div>",
+        unsafe_allow_html=True,
+    )
+
+    for action in g["actions"]:
+        st.write(f"- {action}")
+
+    if not shows_referrals(risk_level):
+        return
+
+    st.markdown("##### Recommended referrals (tertiary facilities)")
+    refs = referrals_for(child["state"])
+    if not refs:
+        st.warning(
+            f"No tertiary hospital configured for {child['state']}. "
+            "Consult the nearest Federal Medical Centre."
+        )
+        return
+
+    rows = [{
+        "Hospital": f"{h.name} ({h.abbreviation})",
+        "City": h.city,
+        "State": h.state,
+        "Type": {
+            "federal_neuro_psychiatric": "Federal Neuro-Psychiatric",
+            "federal_teaching": "Federal Teaching",
+            "state_teaching": "State Teaching",
+            "specialist": "Specialist",
+        }.get(h.kind, h.kind),
+    } for h in refs]
+    st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
 
 
 def render_pdf_download(child: dict, parent_result=None, teacher_result=None) -> None:

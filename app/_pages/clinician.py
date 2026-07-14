@@ -100,6 +100,41 @@ else:
 st.divider()
 
 
+def _render_feedback() -> None:
+    # Same defensive contract as the audit log: a problem reading feedback must
+    # never take down the clinical parts of this dashboard.
+    try:
+        stats = db.feedback_stats()
+        items = db.recent_feedback(limit=50)
+    except Exception as exc:
+        st.caption(f"(Feedback unavailable: {type(exc).__name__})")
+        return
+
+    st.markdown("### User feedback")
+    if not items:
+        st.info("No feedback submitted yet.")
+        return
+
+    m1, m2, m3 = st.columns(3)
+    m1.metric("Total submissions", stats["total"])
+    m2.metric(
+        "Average rating",
+        f"{stats['avg_rating']:.1f} / 5" if stats["avg_rating"] is not None else "-",
+    )
+    top_cat = next(iter(stats["by_category"]), None)
+    m3.metric("Most common topic", top_cat or "-")
+
+    rows = [{
+        "When (UTC)": f["submitted_at"],
+        "From": f["role"] or "-",
+        "Rating": f["rating"] if f["rating"] is not None else "-",
+        "Topic": f["category"] or "-",
+        "Feedback": f["message"],
+        "Contact": f["contact"] or "-",
+    } for f in items]
+    st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+
+
 def _render_audit_log() -> None:
     # Defensive wrapper: a broken audit log should NEVER take down the rest
     # of the dashboard. If anything fails (missing column on an old DB
@@ -126,15 +161,108 @@ def _render_audit_log() -> None:
         st.caption(f"(Audit log render failed: {type(exc).__name__}: {exc})")
 
 
+@st.fragment(run_every=2)
+def _live_thread(consultation_id: int) -> None:
+    """The clinician's view of the message feed. Re-runs on its own every 2s so
+    the parent's replies land without the clinician refreshing."""
+    messages = db.messages_for(consultation_id)
+    if not messages:
+        st.caption("No messages yet.")
+        return
+    for m in messages:
+        mine = m["sender_role"] == ROLE_CLINICIAN
+        with st.chat_message("user" if mine else "assistant"):
+            st.markdown(f"**{m['sender_name'] or m['sender_role']}**  \n{m['body']}")
+            st.caption((m["sent_at"] or "").replace("T", " "))
+
+
+def _render_consultations() -> None:
+    # Defensive, like the rest of the dashboard: a consultation problem must not
+    # take down the clinical review tools.
+    try:
+        open_rows = [
+            c for c in db.list_consultations(limit=100)
+            if c["status"] in ("paid", "closed")
+        ]
+    except Exception as exc:
+        st.caption(f"(Consultations unavailable: {type(exc).__name__})")
+        return
+
+    st.markdown("### Consultations")
+    if not open_rows:
+        st.info("No paid consultations yet.")
+        return
+
+    me = clinician_name() or "Clinician"
+    labels = {}
+    for c in open_rows:
+        waiting = db.unread_count(c["id"], not_from_role=ROLE_CLINICIAN)
+        owner = c["consultant_name"] or "unclaimed"
+        tag = "closed" if c["status"] == "closed" else f"{waiting} msg"
+        labels[f"{c['reference']} - {owner} - {tag}"] = c
+
+    choice = st.selectbox("Open a consultation", list(labels.keys()))
+    c = labels[choice]
+
+    st.markdown(
+        f"<div class='info-card'>"
+        f"<b>{c['reference']}</b> &middot; from {c['requester_role']} "
+        f"&middot; Study ID {c['study_id'] or '-'}<br>"
+        f"<span style='color:#57534e;'>{c['requester_email']} &middot; "
+        f"paid NGN {c['amount_kobo'] / 100:,.2f}</span></div>",
+        unsafe_allow_html=True,
+    )
+
+    if c["study_id"]:
+        st.caption(f"Tip: look up `{c['study_id']}` above to see this child's screening.")
+
+    _live_thread(c["id"])
+
+    if c["status"] == "closed":
+        st.info("This consultation is closed.")
+        return
+
+    if reply := st.chat_input("Reply to the family..."):
+        db.claim_consultation(c["reference"], me)
+        db.post_message(
+            consultation_id=c["id"],
+            sender_role=ROLE_CLINICIAN,
+            sender_name=me,
+            body=reply,
+        )
+        log_clinician_action("consult_reply", target_study_id=c["study_id"])
+        st.rerun()
+
+    if st.button("Close this consultation", key=f"close_{c['reference']}"):
+        db.close_consultation(c["reference"])
+        log_clinician_action("consult_close", target_study_id=c["study_id"])
+        st.rerun()
+
+
+def _render_footer() -> None:
+    """Everything that should appear at the bottom of the dashboard, whichever
+    exit path the page takes (no Study ID entered, unknown ID, no sessions, or
+    the full detail view).
+
+    _render_consultations() is intentionally NOT called: paid consultations are
+    a "Coming Soon" placeholder for now, so no consultation can exist and the
+    section would always be empty. Re-add the call when the paid flow goes live
+    (see app/_pages/_consult_paid_flow.py).
+    """
+    st.divider()
+    _render_feedback()
+    _render_audit_log()
+
+
 # ---------- Detail view for a chosen Study ID ----------
 if not study_id:
-    _render_audit_log()
+    _render_footer()
     st.stop()
 
 child = db.find_child(study_id)
 if not child:
     st.error(f"No child with Study ID **{study_id}** on this deployment.")
-    _render_audit_log()
+    _render_footer()
     st.stop()
 
 # Log the lookup (only on first lookup of this Study ID in this session).
@@ -154,7 +282,7 @@ prof_cols[4].metric("Initials", f"{child['first_name_initial']}.{child['last_nam
 sessions = db.sessions_for_child(child["id"])
 if not sessions:
     st.warning("Profile exists but has no screening sessions yet.")
-    _render_audit_log()
+    _render_footer()
     st.stop()
 
 st.markdown(f"### Longitudinal sessions ({len(sessions)})")
@@ -221,5 +349,4 @@ render_pdf_download(child, parent_result=p_res, teacher_result=t_res)
 # Python. The earlier view_study log already captures the meaningful
 # clinician action (they opened this Study ID and saw the PDF button).
 
-st.divider()
-_render_audit_log()
+_render_footer()

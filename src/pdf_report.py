@@ -20,7 +20,13 @@ from reportlab.platypus import (
     TableStyle,
 )
 
-from .hospitals import Hospital, referral_recommendations
+from .hospitals import Hospital
+from .recommendations import (
+    guidance_for,
+    overall_risk,
+    referrals_for,
+    shows_referrals,
+)
 from .scoring import ScreeningResult, cross_informant_agreement
 
 
@@ -44,9 +50,16 @@ def build_pdf(
     teacher_result: ScreeningResult | None,
     referrals: list[Hospital] | None = None,
 ) -> bytes:
-    """Return raw PDF bytes for download."""
-    if referrals is None and child.get("state"):
-        referrals = referral_recommendations(child["state"])
+    """Return raw PDF bytes for download.
+
+    Referrals are included for HIGH RISK ONLY. When either rater flags High the
+    child is referred (see recommendations.overall_risk); otherwise the report
+    carries monitoring / developmental guidance instead of a hospital list.
+    """
+    risk = overall_risk(parent_result, teacher_result)
+
+    if referrals is None and child.get("state") and shows_referrals(risk or ""):
+        referrals = referrals_for(child["state"])
 
     buf = BytesIO()
     doc = SimpleDocTemplate(
@@ -151,6 +164,19 @@ def build_pdf(
             story.append(Paragraph(f"- {note}", muted))
         story.append(Spacer(1, 10))
 
+    # Recommended next steps -- always present, referrals only when High Risk.
+    if risk:
+        g = guidance_for(risk)
+        story.append(Paragraph(f"Recommended next steps - {g['headline']}", h2))
+        story.append(Paragraph(
+            f"<font color='{_risk_color(risk).hexval()}'><b>{risk}</b></font> - {g['summary']}",
+            body,
+        ))
+        story.append(Spacer(1, 4))
+        for action in g["actions"]:
+            story.append(Paragraph(f"- {action}", body))
+        story.append(Spacer(1, 8))
+
     # Referrals
     if referrals:
         story.append(Paragraph("Recommended tertiary referrals", h2))
@@ -176,13 +202,19 @@ def build_pdf(
         story.append(Spacer(1, 8))
 
     story.append(Spacer(1, 10))
-    story.append(Paragraph(
+    closing = (
         "<b>Important:</b> This document is a screening aid, NOT a clinical "
         "diagnosis. Diagnosis of ADHD requires direct evaluation by a qualified "
-        "child psychiatrist or pediatrician. Bring this report with you to the "
-        "referral appointment.",
-        muted,
-    ))
+        "child psychiatrist or pediatrician."
+    )
+    if referrals:
+        closing += " Bring this report with you to the referral appointment."
+    else:
+        closing += (
+            " No specialist referral is indicated at this screening. Re-screen if "
+            "new concerns arise, and consult your pediatrician if you remain worried."
+        )
+    story.append(Paragraph(closing, muted))
 
     doc.build(story)
     return buf.getvalue()

@@ -3,14 +3,15 @@ ADHD Screening & Referral Support Tool — entry point.
 
 Uses `st.navigation()` to build a *role-gated* sidebar:
 
-    No role picked  ->  [Home, About]
-    Parent role     ->  [Home, Parent Screening, About]
-    Teacher role    ->  [Home, Teacher Screening, About]
-    Clinician role  ->  [Home, About]  (Dashboard only appears after passcode)
-    Clinician + verified -> [Home, Clinician Dashboard, About]
+    No role picked  ->  [Home, Consult, FAQ, Feedback, About]
+    Parent role     ->  [Home, Parent Screening, Consult, FAQ, Feedback, About]
+    Teacher role    ->  [Home, Teacher Screening, Consult, FAQ, Feedback, About]
+    Clinician role  ->  [Home, Consult, FAQ, Feedback, About]  (Dashboard needs the passcode)
+    Clinician + verified -> [Home, Clinician Dashboard, Consult, FAQ, Feedback, About]
 
 Parents never see the Teacher tab. Teachers never see the Parent tab.
 The public never sees the Clinician Dashboard tab.
+Consult, FAQ and Feedback are open to everyone, role or not.
 """
 
 from __future__ import annotations
@@ -56,6 +57,21 @@ def build_pages():
         "_pages/clinician.py", title="Clinician Dashboard",
         icon=":material/medical_information:", url_path="clinician",
     )
+    feedback_pg = st.Page(
+        "_pages/feedback.py", title="Feedback",
+        icon=":material/rate_review:", url_path="feedback",
+    )
+    faq_pg = st.Page(
+        "_pages/faq.py", title="FAQ",
+        icon=":material/help:", url_path="faq",
+    )
+    # "Coming Soon" placeholder. The complete paid flow (Paystack + live chat)
+    # is built and tested in _pages/_consult_paid_flow.py but is deliberately
+    # not registered -- point this at that file to switch the real feature on.
+    consult_pg = st.Page(
+        "_pages/consult.py", title="Consult a Clinician",
+        icon=":material/forum:", url_path="consult",
+    )
 
     role = current_role()
     pages = [home]
@@ -65,6 +81,12 @@ def build_pages():
         pages.append(teacher_pg)
     elif role == ROLE_CLINICIAN and is_clinician_authed():
         pages.append(clinician_pg)
+
+    # Consult, FAQ and Feedback are open to everyone, including visitors with
+    # no role.
+    pages.append(consult_pg)
+    pages.append(faq_pg)
+    pages.append(feedback_pg)
     pages.append(about)
     return pages
 
