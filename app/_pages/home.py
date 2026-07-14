@@ -10,6 +10,7 @@ import streamlit as st
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+import _assets  # noqa: E402
 from _shared import (  # noqa: E402
     ROLE_CLINICIAN,
     ROLE_PARENT,
@@ -25,6 +26,36 @@ from _shared import (  # noqa: E402
 )
 
 header()
+
+
+# The role-card image box is short and wide (340x132), so object-fit:cover crops
+# hard vertically. Faces sit high in these photographs, and the default centred
+# crop cuts the tops of heads off -- so each slot carries its own crop position,
+# checked against the actual image rather than guessed.
+CROP = {
+    "role_parent": "center 25%",
+    "role_teacher": "center 30%",
+    "role_clinician": "center 30%",
+}
+
+
+def role_card(slot: str, body_html: str, accent: str = "#1e3a8a") -> str:
+    """A role card, with its illustration on top if one has been added.
+
+    The image is optional. With no file present the card renders exactly as it
+    always has, so the app is never broken by a missing asset.
+    """
+    uri = _assets.data_uri(slot)
+    img = (
+        f"<img src='{uri}' alt='' style='width:100%; height:132px; "
+        f"object-fit:cover; object-position:{CROP.get(slot, 'center')}; "
+        f"border-radius:3px; margin-bottom:12px; display:block;'/>"
+        if uri else ""
+    )
+    return (
+        f"<div class='role-card' style='height:auto; border-top-color:{accent};'>"
+        f"{img}{body_html}</div>"
+    )
 
 # ---------------------------------------------------------------------------
 # One-shot auto-redirect: when the user clicks "Continue as <role>" or finishes
@@ -44,6 +75,20 @@ elif _just_picked == ROLE_CLINICIAN and is_clinician_authed():
 
 app_banner()
 
+# Optional hero image, directly under the banner. Absent until an image is added.
+#
+# object-position is 'center 30%', not the default 'center': the subjects' faces
+# sit in the upper third, and a centred crop decapitates them at this box ratio.
+_hero = _assets.data_uri("hero")
+if _hero:
+    st.markdown(
+        f"<img src='{_hero}' alt='A Nigerian mother and her two children' "
+        f"style='width:100%; max-height:360px; object-fit:cover; "
+        f"object-position:center 30%; border-radius:6px; margin:0 0 26px 0; "
+        f"display:block;'/>",
+        unsafe_allow_html=True,
+    )
+
 role = current_role()
 
 
@@ -62,11 +107,12 @@ if role is None:
     c1, c2, c3 = st.columns(3, gap="medium")
     with c1:
         st.markdown(
-            "<div class='role-card'>"
-            "<h4>👪 &nbsp;Parent or Caregiver</h4>"
-            "<p>Home-context form (33 items). Generates a Study ID to share "
-            "with your child's teacher.</p>"
-            "</div>",
+            role_card(
+                "role_parent",
+                "<h4>👪 &nbsp;Parent or Caregiver</h4>"
+                "<p>Home-context form (33 items). Generates a Study ID to share "
+                "with your child's teacher.</p>",
+            ),
             unsafe_allow_html=True,
         )
         if st.button("Continue as Parent", type="primary",
@@ -77,11 +123,13 @@ if role is None:
 
     with c2:
         st.markdown(
-            "<div class='role-card' style='border-top-color:#7c2d12;'>"
-            "<h4 style='color:#7c2d12;'>🏫 &nbsp;Teacher</h4>"
-            "<p>Classroom-context form (33 items). Add a teacher rating to "
-            "an existing parent screening via Study ID.</p>"
-            "</div>",
+            role_card(
+                "role_teacher",
+                "<h4 style='color:#7c2d12;'>🏫 &nbsp;Teacher</h4>"
+                "<p>Classroom-context form (33 items). Add a teacher rating to "
+                "an existing parent screening via Study ID.</p>",
+                accent="#7c2d12",
+            ),
             unsafe_allow_html=True,
         )
         if st.button("Continue as Teacher", type="primary",
@@ -92,11 +140,13 @@ if role is None:
 
     with c3:
         st.markdown(
-            "<div class='role-card' style='border-top-color:#166534;'>"
-            "<h4 style='color:#166534;'>⚕️ &nbsp;Clinician</h4>"
-            "<p>Cross-informant review of any child by Study ID. "
-            "<b>Passcode required.</b></p>"
-            "</div>",
+            role_card(
+                "role_clinician",
+                "<h4 style='color:#166534;'>⚕️ &nbsp;Clinician</h4>"
+                "<p>Cross-informant review of any child by Study ID. "
+                "<b>Passcode required.</b></p>",
+                accent="#166534",
+            ),
             unsafe_allow_html=True,
         )
         if st.button("Continue as Clinician", use_container_width=True, key="pick_clin"):

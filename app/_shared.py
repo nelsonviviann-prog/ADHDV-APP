@@ -16,6 +16,9 @@ import joblib
 import pandas as pd
 import streamlit as st
 
+import _assets
+from _illustrations import empty_rating
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
@@ -554,17 +557,108 @@ def save_session_to_db(child_row: dict, responses: dict, result, rater_type: str
     )
 
 
+SCREENING_META = {
+    "Parent": {
+        "accent": "#1e3a8a",
+        "accent_deep": "#1e293b",
+        "eyebrow": "Parent / Caregiver",
+        "title": "How does your child behave at home?",
+        "blurb": "Your answers help a clinician decide whether your child would "
+                 "benefit from a specialist assessment. There are no right answers.",
+        "items": 47,
+    },
+    "Teacher": {
+        "accent": "#7c2d12",
+        "accent_deep": "#431407",
+        "eyebrow": "Teacher",
+        "title": "How does this child behave in class?",
+        "blurb": "Your classroom view is the other half of the picture. A child "
+                 "can cope at home and struggle at school, or the reverse.",
+        "items": 35,
+    },
+}
+
+
+def render_screening_hero(rater_type: str) -> None:
+    """Role-coloured hero + 'what to expect' chips, in place of a bare heading."""
+    m = SCREENING_META[rater_type]
+
+    banner = _assets.data_uri("screening")
+    if banner:
+        st.markdown(
+            f"<img src='{banner}' alt='' style='width:100%; height:140px; "
+            f"object-fit:cover; object-position:center 35%; border-radius:6px 6px 0 0; "
+            f"margin:0; display:block;'/>",
+            unsafe_allow_html=True,
+        )
+
+    radius = "0 0 6px 6px" if banner else "6px"
+    st.markdown(
+        f"""
+        <div style="background:linear-gradient(135deg, {m['accent']} 0%, {m['accent_deep']} 100%);
+                    color:#fafaf9; padding:30px 34px 26px 34px; border-radius:{radius};
+                    border-bottom:3px solid #b45309; margin:0 0 18px 0;">
+          <div style="font-size:11px; letter-spacing:0.18em; text-transform:uppercase;
+                      opacity:0.75; margin-bottom:8px;">{m['eyebrow']} &middot; Screening</div>
+          <h2 style="font-family:Georgia,'Times New Roman',serif; font-weight:700;
+                     font-size:26px; line-height:1.25; margin:0 0 10px 0; color:#fafaf9;">
+            {m['title']}
+          </h2>
+          <div style="font-size:14px; opacity:0.88; line-height:1.6; max-width:620px;">
+            {m['blurb']}
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    chips = [
+        ("&#9201;", "10&ndash;15 minutes"),
+        ("&#9776;", f"{m['items']} items"),
+        ("&#128274;", "Initials only &mdash; no name stored"),
+        ("&#128198;", "Rate the last 6 months"),
+    ]
+    chip_html = "".join(
+        f"<span style='display:inline-block; background:#fafaf9; border:1px solid #e7e5e4; "
+        f"border-radius:20px; padding:6px 14px; margin:0 8px 8px 0; font-size:12.5px; "
+        f"color:#44403c;'>{icon}&nbsp; {label}</span>"
+        for icon, label in chips
+    )
+    st.markdown(f"<div style='margin-bottom:6px;'>{chip_html}</div>", unsafe_allow_html=True)
+
+
+def _step(number: int, title: str, sub: str = "") -> None:
+    """A numbered step marker, so a long form reads as stages rather than a wall."""
+    sub_html = (
+        f"<div style='color:#78716c; font-size:13px; margin-top:2px;'>{sub}</div>"
+        if sub else ""
+    )
+    st.markdown(
+        f"""
+        <div style="display:flex; gap:12px; align-items:center; margin:22px 0 10px 0;">
+          <div style="flex:0 0 28px; height:28px; border-radius:50%; background:{ACCENT_COLOR};
+                      color:#fafaf9; font-weight:700; font-size:13px; display:flex;
+                      align-items:center; justify-content:center;">{number}</div>
+          <div>
+            <div style="font-family:Georgia,serif; font-size:19px; font-weight:700;
+                        color:#1c1917;">{title}</div>
+            {sub_html}
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def run_screening_page(rater_type: str) -> None:
     """Shared body for both Parent and Teacher pages."""
     model, meta = ensure_model_present()
     db.init_db()
 
-    st.markdown(f"#### {rater_type} screening form")
-    st.write(
-        "Fill in the child's basic information and answer every behavioural item. "
-        "All data is stored locally on this device only."
-    )
+    render_screening_hero(rater_type)
 
+    _step(1, "About the child",
+          "No name is stored — initials only, plus an anonymous Study ID.")
     child_input = render_demographics_block(key_prefix=rater_type.lower())
     rater_contact = st.text_input(
         f"{rater_type} contact (optional)",
@@ -573,11 +667,15 @@ def run_screening_page(rater_type: str) -> None:
         key=f"{rater_type.lower()}_contact",
     )
 
+    _step(2, "Behaviour over the last 6 months",
+          "Answer every item. Judge the last 6 months, not just this week.")
     responses = render_questionnaire(
         "parent" if rater_type == "Parent" else "teacher",
         key_prefix=rater_type.lower(),
     )
 
+    _step(3, "Submit", "You will get a Study ID to share with the "
+                       f"{'teacher' if rater_type == 'Parent' else 'parent'}.")
     if not st.button(f"Submit {rater_type} screening", type="primary", use_container_width=True):
         return
 
@@ -629,10 +727,13 @@ def run_screening_page(rater_type: str) -> None:
             teacher_result=other_result if rater_type == "Parent" else result,
         )
     else:
-        st.info(
-            f"No {other_role.lower()} rating on file yet. Ask the {other_role.lower()} "
-            f"to open the **{other_role} Screening** page and enter Study ID "
-            f"**{child_row['study_id']}** to add their view."
+        st.markdown(
+            empty_rating(
+                f"No {other_role.lower()} rating yet",
+                f"Ask the {other_role.lower()} to open the {other_role} Screening page "
+                f"and enter Study ID {child_row['study_id']} to add their view.",
+            ),
+            unsafe_allow_html=True,
         )
         render_pdf_download(
             child_row,

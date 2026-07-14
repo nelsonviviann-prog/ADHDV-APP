@@ -21,5 +21,7 @@ if current_role() != ROLE_PARENT:
     st.switch_page("_pages/home.py")
     st.stop()
 
-header("Parent / Caregiver Screening")
+# No heading argument: the hero inside run_screening_page carries the title, and
+# a bare "### Parent / Caregiver Screening" above it just duplicated it.
+header()
 run_screening_page("Parent")

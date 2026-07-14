@@ -20,5 +20,6 @@ if current_role() != ROLE_TEACHER:
     st.switch_page("_pages/home.py")
     st.stop()
 
-header("Teacher Screening")
+# No heading argument: the hero inside run_screening_page carries the title.
+header()
 run_screening_page("Teacher")

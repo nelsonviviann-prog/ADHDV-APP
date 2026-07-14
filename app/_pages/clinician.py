@@ -15,6 +15,7 @@ import streamlit as st
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from _illustrations import empty_feedback, empty_screenings  # noqa: E402
 from _shared import (  # noqa: E402
     RISK_COLORS,
     ROLE_CLINICIAN,
@@ -80,7 +81,13 @@ def _result_from_row(row: dict):
 st.markdown("### Recent screenings on this deployment")
 recent = db.recent_sessions(limit=25)
 if not recent:
-    st.info("No screenings saved yet. A parent or teacher must submit one first.")
+    st.markdown(
+        empty_screenings(
+            "No screenings saved yet",
+            "A parent or teacher must submit one first.",
+        ),
+        unsafe_allow_html=True,
+    )
 else:
     rows = []
     for s in recent:
@@ -112,7 +119,11 @@ def _render_feedback() -> None:
 
     st.markdown("### User feedback")
     if not items:
-        st.info("No feedback submitted yet.")
+        st.markdown(
+            empty_feedback("No feedback submitted yet",
+                           "Submissions from the Feedback page will appear here."),
+            unsafe_allow_html=True,
+        )
         return
 
     m1, m2, m3 = st.columns(3)

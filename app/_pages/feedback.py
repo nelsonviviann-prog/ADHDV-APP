@@ -18,8 +18,9 @@ import streamlit as st
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from _shared import current_role, header  # noqa: E402
-from src import database as db            # noqa: E402
+from _illustrations import empty_feedback  # noqa: E402
+from _shared import current_role, header   # noqa: E402
+from src import database as db             # noqa: E402
 
 header("Feedback")
 db.init_db()
@@ -141,7 +142,13 @@ except Exception as exc:
 
 if not items:
     st.markdown("### What people are saying")
-    st.info("No feedback yet. Yours would be the first.")
+    st.markdown(
+        empty_feedback(
+            "No feedback yet",
+            "Yours would be the first.",
+        ),
+        unsafe_allow_html=True,
+    )
 else:
     st.markdown(f"### What people are saying ({stats['total']})")
 

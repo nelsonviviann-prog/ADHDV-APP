@@ -22,6 +22,8 @@ import streamlit as st
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+import _assets  # noqa: E402
+from _illustrations import consultation_clinicians  # noqa: E402
 from _shared import header  # noqa: E402
 
 header("Consult a Clinician")
@@ -31,9 +33,9 @@ st.markdown(
     <div style="
         background: linear-gradient(135deg, #1e3a8a 0%, #1e293b 100%);
         color: #fafaf9;
-        padding: 46px 44px;
+        padding: 40px 44px 30px 44px;
         border-radius: 6px;
-        margin: 8px 0 26px 0;
+        margin: 8px 0 0 0;
         border-bottom: 3px solid #b45309;
         text-align: center;
     ">
@@ -55,6 +57,23 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+
+# A photograph if one has been added; otherwise fall back to the hand-drawn SVG
+# clinicians, so this section is never empty.
+# 470px tall, cropped at 45%, is deliberate: a shorter banner cuts off the
+# doctor's hand resting on the mother's, which is the whole point of the picture.
+_consult_img = _assets.data_uri("consult")
+if _consult_img:
+    st.markdown(
+        f"<img src='{_consult_img}' "
+        f"alt='A pediatrician reassuring a mother and her son in a consulting room' "
+        f"style='width:100%; max-height:470px; object-fit:cover; "
+        f"object-position:center 45%; border-radius:6px; margin:22px 0 6px 0; "
+        f"display:block;'/>",
+        unsafe_allow_html=True,
+    )
+else:
+    st.markdown(consultation_clinicians(height=230), unsafe_allow_html=True)
 
 c1, c2, c3 = st.columns(3, gap="medium")
 with c1:

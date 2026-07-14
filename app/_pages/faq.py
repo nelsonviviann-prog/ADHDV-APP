@@ -19,6 +19,59 @@ from _shared import header  # noqa: E402
 
 header("Frequently Asked Questions")
 
+# Navy question bars, matching the home-page banner gradient.
+#
+# This restyles EVERY expander -- but only while this page is the active one.
+# st.navigation runs just the selected page's script, so the <style> block is
+# never emitted on the screening pages, whose "Section A - Inattention"
+# expanders must stay quiet and neutral. Move this into _shared.header() and it
+# would bleed onto the questionnaire.
+st.markdown(
+    """
+    <style>
+    /* Streamlit's expander markup has changed across versions, so target the
+       summary row through several selectors rather than betting on one. */
+    div[data-testid="stExpander"] details {
+        border: none !important;
+        border-radius: 4px;
+        margin-bottom: 8px;
+        overflow: hidden;
+        box-shadow: 0 1px 2px rgba(28,25,23,0.06);
+    }
+    div[data-testid="stExpander"] details summary {
+        background: linear-gradient(135deg, #1e3a8a 0%, #1e293b 100%) !important;
+        border-left: 3px solid #b45309 !important;
+        padding: 14px 16px !important;
+        font-weight: 600;
+    }
+    div[data-testid="stExpander"] details summary:hover {
+        background: linear-gradient(135deg, #1e40af 0%, #334155 100%) !important;
+    }
+    /* The label and the chevron both need to go light. */
+    div[data-testid="stExpander"] details summary *,
+    div[data-testid="stExpander"] details summary p,
+    div[data-testid="stExpander"] details summary span {
+        color: #fafaf9 !important;
+    }
+    div[data-testid="stExpander"] details summary svg {
+        fill: #fafaf9 !important;
+        color: #fafaf9 !important;
+    }
+    /* Open question: amber underline ties it back to the banner's bottom rule. */
+    div[data-testid="stExpander"] details[open] summary {
+        border-bottom: 2px solid #b45309 !important;
+    }
+    div[data-testid="stExpander"] details[open] > div {
+        background: #ffffff;
+        border: 1px solid #e7e5e4;
+        border-top: none;
+        padding: 4px 6px 8px 6px;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 st.markdown(
     "<div class='info-card'>"
     "<b>Short answers to the questions parents, teachers, and health workers "
