@@ -22,11 +22,13 @@ from reportlab.platypus import (
 
 from .hospitals import Hospital
 from .recommendations import (
+    follow_up_months,
     guidance_for,
     overall_risk,
     referrals_for,
     shows_referrals,
 )
+from .reminders import follow_up_date
 from .scoring import ScreeningResult, cross_informant_agreement
 
 
@@ -175,6 +177,17 @@ def build_pdf(
         story.append(Spacer(1, 4))
         for action in g["actions"]:
             story.append(Paragraph(f"- {action}", body))
+
+        months = follow_up_months(risk)
+        if months:
+            fdate = follow_up_date(months)
+            story.append(Spacer(1, 4))
+            story.append(Paragraph(
+                f"<b>Recommended re-screening date: {fdate.strftime('%d %B %Y')}</b> "
+                f"- re-open the tool and enter Study ID "
+                f"{child.get('study_id', '-')} to re-check.",
+                body,
+            ))
         story.append(Spacer(1, 8))
 
     # Referrals

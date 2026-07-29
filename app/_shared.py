@@ -35,10 +35,12 @@ from src.instruments import (                  # noqa: E402
 )
 from src.pdf_report import build_pdf           # noqa: E402
 from src.recommendations import (              # noqa: E402
+    follow_up_months,
     guidance_for,
     referrals_for,
     shows_referrals,
 )
+from src.reminders import build_ics, follow_up_date  # noqa: E402
 from src.scoring import (                      # noqa: E402
     cross_informant_agreement,
     score as score_responses,
@@ -588,6 +590,42 @@ def render_next_steps(risk_level: str, child: dict) -> None:
 
     for action in g["actions"]:
         st.write(f"- {action}")
+
+    # 3-month follow-up: a concrete re-screening date + a calendar reminder the
+    # parent adds to their OWN device (no contact details stored). Shown for the
+    # levels that monitor-and-re-screen (Low / Moderate); High goes to referral.
+    months = follow_up_months(risk_level)
+    if months:
+        fdate = follow_up_date(months)
+        date_str = fdate.strftime("%d %B %Y")
+        sid = child.get("study_id") or "your child's Study ID"
+        st.markdown(
+            f"<div class='info-card' style='border-left-color:"
+            f"{RISK_COLORS.get(risk_level, ACCENT_COLOR)};'>"
+            f"<b>📅 Recommended re-screening date: {date_str}</b><br>"
+            f"<span style='color:#44403c;'>On that date, re-open this tool and enter "
+            f"Study ID <b>{sid}</b> to re-check whether the signs have changed. "
+            f"Add the reminder to your phone below so it is not forgotten.</span></div>",
+            unsafe_allow_html=True,
+        )
+        ics = build_ics(
+            summary="ADHD follow-up: re-check your child",
+            description=(
+                f"Re-open the ADHD Screening tool and enter Study ID {sid} to "
+                "re-screen and see whether the earlier signs have changed. "
+                "This is a screening reminder, not a diagnosis."
+            ),
+            on_date=fdate,
+            uid=f"adhd-followup-{sid}-{fdate.strftime('%Y%m%d')}@adhdv-app",
+        )
+        st.download_button(
+            f"📅 Add {months}-month reminder to my calendar",
+            data=ics,
+            file_name="adhd_followup_reminder.ics",
+            mime="text/calendar",
+            use_container_width=True,
+            key=f"ics_reminder_{risk_level}",
+        )
 
     if not shows_referrals(risk_level):
         return

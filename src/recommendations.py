@@ -41,27 +41,50 @@ GUIDANCE: dict[str, dict] = {
     MODERATE: {
         "headline": "Watchful Monitoring",
         "summary": (
-            "Some symptoms are present but do not currently meet the threshold "
-            "for immediate specialist referral. Monitor and re-screen."
+            "A few signs are showing, but not enough to point to ADHD right now. "
+            "This is common -- many children show some of these behaviours as they "
+            "grow. The right step now is to watch closely, not to worry."
         ),
         "actions": [
-            "Consult with school teachers to monitor focus across classroom settings.",
-            "Recommend a physical assessment (vision & hearing) to rule out sensory delays.",
-            "Schedule a follow-up screening questionnaire in 3-6 months.",
+            "Over the next 3 months, watch for these specific behaviours: trouble "
+            "staying focused on schoolwork or play, restlessness or constant "
+            "fidgeting, not finishing tasks or chores, and acting or speaking "
+            "without thinking first.",
+            "Keep a short weekly note of when these happen and where -- at home, at "
+            "school, or both. A pattern across settings matters more than one-off days.",
+            "Ask your child's teacher whether they notice the same behaviours in "
+            "class. A child can struggle in one setting and cope in another.",
+            "Rule out simple causes first: book a basic vision and hearing check, and "
+            "keep sleep, meals, and screen time steady.",
+            "Re-screen in 3 months. If the same behaviours are still there -- or have "
+            "grown -- that is your signal to seek a specialist assessment. If they "
+            "have eased, no further action is needed.",
         ],
     },
     LOW: {
-        "headline": "Healthy Development",
+        "headline": "No Strong Signs -- Healthy Range",
         "summary": (
-            "Symptom load falls within the expected bounds of standard pediatric "
-            "development."
+            "This screening found no strong signs of ADHD. Your child's behaviour "
+            "falls within the normal range for their age. There is nothing to worry "
+            "about right now."
         ),
         "actions": [
-            "Provide standard healthy lifestyle and focus-behaviour guidance.",
-            "Re-screen only if new concerns arise at home or at school.",
+            "No special action is needed. Keep supporting focus and self-control the "
+            "everyday way: consistent routines, enough sleep, limited screen time, "
+            "and plenty of space to play, read, and finish small tasks.",
+            "You do not need to re-screen on a fixed schedule. Re-screen if something "
+            "new comes up -- a teacher raises a concern, or you notice a clear change "
+            "in focus, activity, or behaviour at home.",
+            "For peace of mind, you can set an optional 3-month reminder below to "
+            "re-check how things are going.",
         ],
     },
 }
+
+# Months until a recommended re-screen, per risk level. High Risk goes straight
+# to specialist referral, so a scheduled self re-screen would only delay care --
+# hence None.
+FOLLOW_UP_MONTHS: dict[str, int | None] = {HIGH: None, MODERATE: 3, LOW: 3}
 
 
 def shows_referrals(risk_level: str) -> bool:
@@ -73,6 +96,12 @@ def guidance_for(risk_level: str) -> dict:
     """Headline / summary / action bullets for a risk level. Falls back to Moderate
     for an unrecognised level so the family is never left with no advice."""
     return GUIDANCE.get(risk_level, GUIDANCE[MODERATE])
+
+
+def follow_up_months(risk_level: str) -> int | None:
+    """Months until a recommended re-screen, or None when immediate referral
+    (High Risk) makes a scheduled self re-screen inappropriate."""
+    return FOLLOW_UP_MONTHS.get(risk_level)
 
 
 def national_centres() -> list[Hospital]:
