@@ -147,8 +147,8 @@ def build_pdf(
             for f in res.flags:
                 color = HIGH if f["severity"] == "High" else MOD
                 story.append(Paragraph(
-                    f"<font color='{color.hexval()}'><b>[{f['severity']}]</b></font> "
-                    f"{f['domain']}: {f['message']}",
+                    f"<font color='{color.hexval()}'><b>{f['severity'].upper()}</b></font> "
+                    f"&nbsp;{f['domain']}: {f['message']}",
                     body,
                 ))
         story.append(Spacer(1, 10))
@@ -199,9 +199,9 @@ def build_pdf(
                 f"signs are still happening:",
                 body,
             ))
-            fu_rows = [["Sign to re-check at follow-up", "Still happening?"]]
+            fu_rows = [["Sign to re-check at follow-up", "Still happening? (tick)"]]
             for w in g["watch_for"]:
-                fu_rows.append([w, "[  ]"])
+                fu_rows.append([w, ""])
             fu_tbl = Table(fu_rows, colWidths=[125 * mm, 30 * mm])
             fu_tbl.setStyle(TableStyle([
                 ("BACKGROUND", (0, 0), (-1, 0), PRIMARY),
@@ -210,6 +210,10 @@ def build_pdf(
                 ("FONTSIZE", (0, 0), (-1, -1), 9),
                 ("BOX", (0, 0), (-1, -1), 0.5, colors.lightgrey),
                 ("INNERGRID", (0, 0), (-1, -1), 0.25, colors.lightgrey),
+                # Roomier body rows so the blank tick cell is a usable box.
+                ("TOPPADDING", (0, 1), (-1, -1), 8),
+                ("BOTTOMPADDING", (0, 1), (-1, -1), 8),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
             ]))
             story.append(Spacer(1, 4))
             story.append(fu_tbl)

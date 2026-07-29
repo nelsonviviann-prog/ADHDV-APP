@@ -551,9 +551,15 @@ def render_result(result, ml_risk: str, ml_probs: dict, child: dict, rater_type:
         st.markdown("#### Co-occurring concerns")
         for f in result.flags:
             color = "#dc2626" if f["severity"] == "High" else "#d97706"
+            badge = (
+                f"<span style='background:{color}; color:#ffffff; padding:2px 10px; "
+                f"border-radius:12px; font-size:11px; font-weight:600; "
+                f"letter-spacing:.04em; text-transform:uppercase;'>{f['severity']}</span>"
+            )
             st.markdown(
                 f"<div class='info-card' style='border-left-color:{color}'>"
-                f"<b>[{f['severity']}] {f['domain']}</b><br>{f['message']}</div>",
+                f"{badge} &nbsp;<b>{f['domain']}</b><br>"
+                f"<span style='color:#44403c;'>{f['message']}</span></div>",
                 unsafe_allow_html=True,
             )
 
@@ -618,11 +624,12 @@ def render_next_steps(risk_level: str, child: dict) -> None:
             f"assessment. If they have eased, no further action is needed.</span></div>",
             unsafe_allow_html=True,
         )
-        checklist = pd.DataFrame({
-            "Sign to re-check at follow-up": g["watch_for"],
-            "Still happening?": ["☐"] * len(g["watch_for"]),
-        })
-        st.dataframe(checklist, use_container_width=True, hide_index=True)
+        signs = pd.DataFrame({"Signs to re-check at your follow-up": g["watch_for"]})
+        st.dataframe(signs, use_container_width=True, hide_index=True)
+        st.caption(
+            "The downloadable PDF report includes a tick-box version of this list "
+            "to fill in on the day."
+        )
 
     if not shows_referrals(risk_level):
         return
