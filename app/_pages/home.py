@@ -12,6 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import _assets  # noqa: E402
 from _shared import (  # noqa: E402
+    RISK_COLORS,
     ROLE_CLINICIAN,
     ROLE_PARENT,
     ROLE_TEACHER,
@@ -21,9 +22,12 @@ from _shared import (  # noqa: E402
     header,
     is_clinician_authed,
     is_dev_passcode_in_use,
+    risk_meter,
     set_role,
     verify_clinician,
 )
+from src import config as cfg  # noqa: E402
+from src.scoring import score  # noqa: E402
 
 header()
 
@@ -88,6 +92,23 @@ if _hero:
         f"display:block;'/>",
         unsafe_allow_html=True,
     )
+
+# Animated stat strip -- the first thing a visitor sees move on the page.
+st.markdown(
+    """
+    <div class="stat-strip">
+      <div class="stat-tile"><div class="stat-num">37</div>
+        <div class="stat-lbl">States + FCT covered</div></div>
+      <div class="stat-tile"><div class="stat-num">18</div>
+        <div class="stat-lbl">DSM-5 core symptoms</div></div>
+      <div class="stat-tile"><div class="stat-num">4&ndash;15</div>
+        <div class="stat-lbl">Ages screened</div></div>
+      <div class="stat-tile"><div class="stat-num">3</div>
+        <div class="stat-lbl">Views: parent, teacher, clinician</div></div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 role = current_role()
 
@@ -221,6 +242,67 @@ else:
         unsafe_allow_html=True,
     )
     st.page_link(target[0], label=target[1])
+
+
+# ---------------------------------------------------------------------------
+# Interactive live demo - visible to everyone. Uses the REAL rule-based scorer
+# so a visitor can see how symptom count + impairment drive the risk band,
+# without filling the full form. Clearly labelled as a demo, not a screening.
+# ---------------------------------------------------------------------------
+st.markdown("<div style='height:36px'></div>", unsafe_allow_html=True)
+st.divider()
+st.markdown("### Try it - see how the screener thinks")
+st.markdown(
+    "<p style='color:#57534e; margin-bottom:14px;'>Drag the sliders to sketch a child's "
+    "behaviour over the last 6 months. The risk band updates live, using the same DSM-5 "
+    "rules as the real screening. <b>This is a demonstration, not a screening.</b></p>",
+    unsafe_allow_html=True,
+)
+
+d_left, d_right = st.columns([1, 1], gap="large")
+with d_left:
+    demo_inatt = st.slider(
+        "Inattention symptoms seen often (of 9)", 0, 9, 2,
+        help="e.g. careless mistakes, not listening, easily distracted, forgetful.",
+        key="demo_inatt",
+    )
+    demo_hyper = st.slider(
+        "Hyperactive / impulsive symptoms seen often (of 9)", 0, 9, 2,
+        help="e.g. fidgets, cannot stay seated, blurts answers, interrupts.",
+        key="demo_hyper",
+    )
+    demo_impair = st.slider(
+        "Areas of life clearly affected (of 8)", 0, 8, 1,
+        help="e.g. schoolwork, reading, friendships, family relationships.",
+        key="demo_impair",
+    )
+
+# Build a partial response dict and run the real scorer. Missing performance
+# items default to 3 (average) inside score(), so only the affected areas count.
+_demo_responses: dict[str, int] = {}
+for i, item in enumerate(cfg.INATTENTION_ITEMS):
+    _demo_responses[item] = 4 if i < demo_inatt else 0
+for i, item in enumerate(cfg.HYPERACTIVITY_ITEMS):
+    _demo_responses[item] = 4 if i < demo_hyper else 0
+for i, item in enumerate(cfg.PERFORMANCE_ITEMS):
+    _demo_responses[item] = 5 if i < demo_impair else 3
+_demo_result = score(_demo_responses)
+
+with d_right:
+    st.markdown(risk_meter(_demo_result.risk_level), unsafe_allow_html=True)
+    st.markdown(
+        f"<div class='info-card' style='border-left-color:"
+        f"{RISK_COLORS.get(_demo_result.risk_level, '#1e3a8a')};'>"
+        f"<b>{_demo_result.risk_level}</b> &middot; {_demo_result.presentation}<br>"
+        f"<span style='color:#57534e; font-size:13px;'>"
+        f"{max(demo_inatt, demo_hyper)} symptoms in the stronger subscale &middot; "
+        f"{demo_impair} area(s) affected.</span></div>",
+        unsafe_allow_html=True,
+    )
+    st.caption(
+        "Demonstration only. A real screening asks all 33 questions, pairs parent and "
+        "teacher views, and is reviewed by a clinician."
+    )
 
 
 # ---------------------------------------------------------------------------

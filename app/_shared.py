@@ -306,6 +306,31 @@ def header(active_label: str | None = None) -> None:
             transform: translateY(-2px) scale(1.02); color:#ffffff; border:none;
             box-shadow: 0 6px 16px rgba(28,25,23,0.18);
         }
+
+        /* --- home stat strip (animated reveal) --- */
+        @keyframes appFadeUp {
+            from { opacity:0; transform:translateY(10px); }
+            to   { opacity:1; transform:none; }
+        }
+        .stat-strip { display:flex; gap:14px; margin:0 0 30px 0; flex-wrap:wrap; }
+        .stat-tile {
+            flex:1; min-width:150px; background:#ffffff; border:1px solid #e7e5e4;
+            border-top:3px solid #1e3a8a; border-radius:6px; padding:18px 20px;
+            box-shadow:0 1px 2px rgba(28,25,23,0.04);
+            transition: transform .16s ease, box-shadow .16s ease;
+            animation: appFadeUp .5s ease both;
+        }
+        .stat-tile:nth-child(2){ animation-delay:.08s; }
+        .stat-tile:nth-child(3){ animation-delay:.16s; }
+        .stat-tile:nth-child(4){ animation-delay:.24s; }
+        .stat-tile:hover {
+            transform:translateY(-4px); box-shadow:0 8px 22px rgba(28,25,23,0.10);
+        }
+        .stat-num {
+            font-family:Georgia,serif; font-size:34px; font-weight:700;
+            color:#1e3a8a; line-height:1;
+        }
+        .stat-lbl { font-size:12.5px; color:#57534e; margin-top:6px; }
         </style>
         """,
         unsafe_allow_html=True,
