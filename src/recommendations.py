@@ -30,12 +30,29 @@ GUIDANCE: dict[str, dict] = {
     HIGH: {
         "headline": "Immediate Referral",
         "summary": (
-            "Symptoms and functional impairment both meet the threshold for "
-            "specialist review. Book an appointment at one of the facilities below."
+            "Both the number of symptoms and their impact on daily life meet the "
+            "threshold for specialist review. Book an appointment at one of the "
+            "facilities below. This is a screening result, not a diagnosis -- the "
+            "specialist makes the final decision."
         ),
         "actions": [
-            "Child Psychiatry Clinic at the closest regional State Teaching Hospital.",
-            "School Action: recommend IEP (Individualized Education Program) adjustments.",
+            "Book the Child Psychiatry / Child & Adolescent Mental Health clinic at "
+            "the closest facility listed below.",
+            "Ask the school about an Individualized Education Program (IEP) or "
+            "classroom adjustments.",
+        ],
+        "help_headline": "Ways to help your child day-to-day while you arrange specialist care",
+        "help_strategies": [
+            "Keep a very predictable daily routine -- steady times for waking, "
+            "homework, meals, and sleep. Predictability lowers overwhelm.",
+            "Give one small instruction at a time and check in after each step, "
+            "rather than several instructions at once.",
+            "Create a quiet, tidy space for focused work, with phones and TV off.",
+            "Notice and praise effort and small wins straight away -- this works "
+            "better than punishing mistakes.",
+            "Build in short movement breaks and daily physical activity to release "
+            "energy.",
+            "Protect sleep and keep screen time low, especially before bed.",
         ],
     },
     MODERATE: {
@@ -43,22 +60,28 @@ GUIDANCE: dict[str, dict] = {
         "summary": (
             "A few signs are showing, but not enough to point to ADHD right now. "
             "This is common -- many children show some of these behaviours as they "
-            "grow. The right step now is to watch closely, not to worry."
+            "grow. The right step is to watch closely and act early if they persist, "
+            "not to worry."
         ),
-        "actions": [
-            "Over the next 3 months, watch for these specific behaviours: trouble "
-            "staying focused on schoolwork or play, restlessness or constant "
-            "fidgeting, not finishing tasks or chores, and acting or speaking "
-            "without thinking first.",
-            "Keep a short weekly note of when these happen and where -- at home, at "
-            "school, or both. A pattern across settings matters more than one-off days.",
-            "Ask your child's teacher whether they notice the same behaviours in "
-            "class. A child can struggle in one setting and cope in another.",
-            "Rule out simple causes first: book a basic vision and hearing check, and "
-            "keep sleep, meals, and screen time steady.",
-            "Re-screen in 3 months. If the same behaviours are still there -- or have "
-            "grown -- that is your signal to seek a specialist assessment. If they "
-            "have eased, no further action is needed.",
+        "watch_for": [
+            "Trouble staying focused on schoolwork or play",
+            "Restlessness or constant fidgeting",
+            "Not finishing tasks or chores",
+            "Acting or speaking without thinking first",
+            "Forgetting or losing things needed for daily tasks",
+            "Difficulty following instructions that have several steps",
+        ],
+        "help_headline": "Ways to help now (and lower the chance it grows)",
+        "help_strategies": [
+            "Add structure: a simple visual daily routine the child can see and follow.",
+            "Break homework into short, timed chunks with a break in between.",
+            "Set one or two clear house rules and follow through calmly and "
+            "consistently.",
+            "Use a small reward chart for focus and finishing tasks -- reward effort, "
+            "not perfection.",
+            "Work with the teacher so home and school use the same approach.",
+            "Protect sleep and steady meals, keep daily play or exercise, and cut "
+            "distractions during focus time.",
         ],
     },
     LOW: {
@@ -68,23 +91,33 @@ GUIDANCE: dict[str, dict] = {
             "falls within the normal range for their age. There is nothing to worry "
             "about right now."
         ),
-        "actions": [
-            "No special action is needed. Keep supporting focus and self-control the "
-            "everyday way: consistent routines, enough sleep, limited screen time, "
-            "and plenty of space to play, read, and finish small tasks.",
-            "You do not need to re-screen on a fixed schedule. Re-screen if something "
-            "new comes up -- a teacher raises a concern, or you notice a clear change "
-            "in focus, activity, or behaviour at home.",
-            "For peace of mind, you can set an optional 3-month reminder below to "
-            "re-check how things are going.",
+        "watch_for": [
+            "A teacher raising a new concern about focus or behaviour",
+            "A clear, lasting change in attention, activity level, or mood",
+            "New trouble finishing schoolwork or following daily routines",
+        ],
+        "help_headline": "Ways to keep supporting healthy development",
+        "help_strategies": [
+            "Keep consistent routines for sleep, meals, homework, and play.",
+            "Protect enough sleep for their age and keep screen time limited and "
+            "balanced.",
+            "Give plenty of chances to read, play, and finish small tasks -- this "
+            "builds focus and self-control.",
+            "Praise effort and patience so good habits stick.",
+            "Stay in regular touch with the teacher so any change is caught early.",
         ],
     },
 }
 
-# Months until a recommended re-screen, per risk level. High Risk goes straight
-# to specialist referral, so a scheduled self re-screen would only delay care --
-# hence None.
-FOLLOW_UP_MONTHS: dict[str, int | None] = {HIGH: None, MODERATE: 3, LOW: 3}
+# Recommended re-check WINDOW (earliest, latest) in months from the screening
+# date. Low is checked less often; Moderate sooner (it is closer to threshold).
+# High Risk goes straight to specialist referral, so it has no self re-check
+# window -- waiting would only delay care.
+FOLLOW_UP_WINDOW: dict[str, tuple[int, int] | None] = {
+    HIGH: None,
+    MODERATE: (2, 3),
+    LOW: (4, 6),
+}
 
 
 def shows_referrals(risk_level: str) -> bool:
@@ -98,10 +131,10 @@ def guidance_for(risk_level: str) -> dict:
     return GUIDANCE.get(risk_level, GUIDANCE[MODERATE])
 
 
-def follow_up_months(risk_level: str) -> int | None:
-    """Months until a recommended re-screen, or None when immediate referral
-    (High Risk) makes a scheduled self re-screen inappropriate."""
-    return FOLLOW_UP_MONTHS.get(risk_level)
+def follow_up_window(risk_level: str) -> tuple[int, int] | None:
+    """The recommended re-check window (earliest, latest months from today), or
+    None when immediate referral (High Risk) makes a self re-check inappropriate."""
+    return FOLLOW_UP_WINDOW.get(risk_level)
 
 
 def national_centres() -> list[Hospital]:

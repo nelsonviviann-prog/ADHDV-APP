@@ -22,7 +22,7 @@ from reportlab.platypus import (
 
 from .hospitals import Hospital
 from .recommendations import (
-    follow_up_months,
+    follow_up_window,
     guidance_for,
     overall_risk,
     referrals_for,
@@ -175,19 +175,44 @@ def build_pdf(
             body,
         ))
         story.append(Spacer(1, 4))
-        for action in g["actions"]:
+        for action in g.get("actions", []):
             story.append(Paragraph(f"- {action}", body))
 
-        months = follow_up_months(risk)
-        if months:
-            fdate = follow_up_date(months)
+        # Ways to help
+        if g.get("help_strategies"):
             story.append(Spacer(1, 4))
+            story.append(Paragraph(f"<b>{g.get('help_headline', 'Ways to help')}:</b>", body))
+            for tip in g["help_strategies"]:
+                story.append(Paragraph(f"- {tip}", body))
+
+        # Follow-up plan (Low / Moderate): re-check window + a signs checklist.
+        window = follow_up_window(risk)
+        if window and g.get("watch_for"):
+            lo, hi = window
+            d_lo = follow_up_date(lo).strftime("%d %B %Y")
+            d_hi = follow_up_date(hi).strftime("%d %B %Y")
+            story.append(Spacer(1, 6))
             story.append(Paragraph(
-                f"<b>Recommended re-screening date: {fdate.strftime('%d %B %Y')}</b> "
-                f"- re-open the tool and enter Study ID "
-                f"{child.get('study_id', '-')} to re-check.",
+                f"<b>Follow-up plan - check again between {d_lo} and {d_hi}</b> "
+                f"({lo}-{hi} months from today). On that day, re-open the tool "
+                f"(Study ID {child.get('study_id', '-')}) and check whether these "
+                f"signs are still happening:",
                 body,
             ))
+            fu_rows = [["Sign to re-check at follow-up", "Still happening?"]]
+            for w in g["watch_for"]:
+                fu_rows.append([w, "[  ]"])
+            fu_tbl = Table(fu_rows, colWidths=[125 * mm, 30 * mm])
+            fu_tbl.setStyle(TableStyle([
+                ("BACKGROUND", (0, 0), (-1, 0), PRIMARY),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("FONTSIZE", (0, 0), (-1, -1), 9),
+                ("BOX", (0, 0), (-1, -1), 0.5, colors.lightgrey),
+                ("INNERGRID", (0, 0), (-1, -1), 0.25, colors.lightgrey),
+            ]))
+            story.append(Spacer(1, 4))
+            story.append(fu_tbl)
         story.append(Spacer(1, 8))
 
     # Referrals

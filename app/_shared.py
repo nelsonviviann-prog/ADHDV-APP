@@ -35,12 +35,12 @@ from src.instruments import (                  # noqa: E402
 )
 from src.pdf_report import build_pdf           # noqa: E402
 from src.recommendations import (              # noqa: E402
-    follow_up_months,
+    follow_up_window,
     guidance_for,
     referrals_for,
     shows_referrals,
 )
-from src.reminders import build_ics, follow_up_date  # noqa: E402
+from src.reminders import follow_up_date        # noqa: E402
 from src.scoring import (                      # noqa: E402
     cross_informant_agreement,
     score as score_responses,
@@ -588,44 +588,41 @@ def render_next_steps(risk_level: str, child: dict) -> None:
         unsafe_allow_html=True,
     )
 
-    for action in g["actions"]:
+    # Referral actions (High Risk only carries these).
+    for action in g.get("actions", []):
         st.write(f"- {action}")
 
-    # 3-month follow-up: a concrete re-screening date + a calendar reminder the
-    # parent adds to their OWN device (no contact details stored). Shown for the
-    # levels that monitor-and-re-screen (Low / Moderate); High goes to referral.
-    months = follow_up_months(risk_level)
-    if months:
-        fdate = follow_up_date(months)
-        date_str = fdate.strftime("%d %B %Y")
+    # Ways to help -- supportive strategies for every level.
+    if g.get("help_strategies"):
+        st.markdown(f"##### {g.get('help_headline', 'Ways to help')}")
+        for tip in g["help_strategies"]:
+            st.write(f"- {tip}")
+
+    # Follow-up plan: a concrete re-check date window + a printable checklist of
+    # the signs to look at again. Low / Moderate only -- High goes to referral now.
+    window = follow_up_window(risk_level)
+    if window and g.get("watch_for"):
+        lo, hi = window
+        d_lo = follow_up_date(lo).strftime("%d %B %Y")
+        d_hi = follow_up_date(hi).strftime("%d %B %Y")
         sid = child.get("study_id") or "your child's Study ID"
+        st.markdown("##### Your follow-up plan")
         st.markdown(
             f"<div class='info-card' style='border-left-color:"
             f"{RISK_COLORS.get(risk_level, ACCENT_COLOR)};'>"
-            f"<b>📅 Recommended re-screening date: {date_str}</b><br>"
-            f"<span style='color:#44403c;'>On that date, re-open this tool and enter "
-            f"Study ID <b>{sid}</b> to re-check whether the signs have changed. "
-            f"Add the reminder to your phone below so it is not forgotten.</span></div>",
+            f"<b>📅 Check again between {d_lo} and {d_hi}</b> "
+            f"<span style='color:#57534e;'>({lo}&ndash;{hi} months from today)</span><br>"
+            f"<span style='color:#44403c;'>On that day, re-open this tool (Study ID "
+            f"<b>{sid}</b>) and look at whether these signs are still happening. If two "
+            f"or more are still there across home and school, seek a specialist "
+            f"assessment. If they have eased, no further action is needed.</span></div>",
             unsafe_allow_html=True,
         )
-        ics = build_ics(
-            summary="ADHD follow-up: re-check your child",
-            description=(
-                f"Re-open the ADHD Screening tool and enter Study ID {sid} to "
-                "re-screen and see whether the earlier signs have changed. "
-                "This is a screening reminder, not a diagnosis."
-            ),
-            on_date=fdate,
-            uid=f"adhd-followup-{sid}-{fdate.strftime('%Y%m%d')}@adhdv-app",
-        )
-        st.download_button(
-            f"📅 Add {months}-month reminder to my calendar",
-            data=ics,
-            file_name="adhd_followup_reminder.ics",
-            mime="text/calendar",
-            use_container_width=True,
-            key=f"ics_reminder_{risk_level}",
-        )
+        checklist = pd.DataFrame({
+            "Sign to re-check at follow-up": g["watch_for"],
+            "Still happening?": ["☐"] * len(g["watch_for"]),
+        })
+        st.dataframe(checklist, use_container_width=True, hide_index=True)
 
     if not shows_referrals(risk_level):
         return
