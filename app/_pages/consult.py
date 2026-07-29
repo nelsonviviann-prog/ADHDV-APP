@@ -80,7 +80,7 @@ with c1:
     st.markdown(
         "<div class='role-card' style='height:auto;'>"
         "<h4>Private</h4>"
-        "<p>A one-to-one conversation about your result &mdash; not a public forum.</p>"
+        "<p>A one-to-one conversation about your result - not a public forum.</p>"
         "</div>",
         unsafe_allow_html=True,
     )
@@ -121,6 +121,6 @@ st.divider()
 st.warning(
     "**A consultation will never be a diagnosis.** ADHD diagnosis requires "
     "direct evaluation by a qualified child psychiatrist or pediatrician. If "
-    "your child is in crisis, go to a hospital now &mdash; do not wait for this "
+    "your child is in crisis, go to a hospital now - do not wait for this "
     "service."
 )

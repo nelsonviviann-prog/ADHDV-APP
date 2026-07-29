@@ -268,6 +268,44 @@ def header(active_label: str | None = None) -> None:
         .role-card p  { color: #44403c; margin-bottom: 0; line-height: 1.55; }
         /* sidebar tweaks */
         section[data-testid="stSidebar"] { border-right: 1px solid #e7e5e4; }
+
+        /* --- interactive polish: subtle lift on hover --- */
+        .role-card { transition: transform .16s ease, box-shadow .16s ease; }
+        .role-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 22px rgba(28,25,23,0.12);
+        }
+        .info-card { transition: box-shadow .16s ease; }
+        .info-card:hover { box-shadow: 0 4px 14px rgba(28,25,23,0.08); }
+
+        div[data-testid="stButton"] > button,
+        div[data-testid="stFormSubmitButton"] > button,
+        div[data-testid="stDownloadButton"] > button {
+            transition: transform .1s ease, box-shadow .15s ease;
+        }
+        div[data-testid="stButton"] > button:hover,
+        div[data-testid="stFormSubmitButton"] > button:hover,
+        div[data-testid="stDownloadButton"] > button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(30,58,138,0.18);
+        }
+
+        /* --- animated risk meter (result screen) --- */
+        .risk-meter { display:flex; gap:8px; margin:6px 0 20px 0; }
+        .risk-seg {
+            flex:1; text-align:center; padding:14px 8px 12px 8px; border-radius:6px;
+            font-family:Georgia,serif; font-size:15px; font-weight:600;
+            border:1px solid #e7e5e4; background:#f5f5f4; color:#a8a29e;
+            transition: transform .25s ease, box-shadow .25s ease;
+        }
+        .risk-seg .lvl-sub {
+            display:block; font-family:sans-serif; font-size:10.5px; font-weight:600;
+            letter-spacing:.08em; text-transform:uppercase; opacity:.85; margin-top:3px;
+        }
+        .risk-seg.active {
+            transform: translateY(-2px) scale(1.02); color:#ffffff; border:none;
+            box-shadow: 0 6px 16px rgba(28,25,23,0.18);
+        }
         </style>
         """,
         unsafe_allow_html=True,
@@ -279,6 +317,28 @@ def header(active_label: str | None = None) -> None:
 def risk_pill(risk_level: str) -> str:
     cls = "low" if "Low" in risk_level else "high" if "High" in risk_level else "moderate"
     return f'<span class="pill risk-pill-{cls}">{risk_level}</span>'
+
+
+def risk_meter(risk_level: str) -> str:
+    """A three-segment meter (Low / Moderate / High) with the current level
+    lifted and colour-filled. Pure CSS/HTML -- no charting dependency."""
+    order = ["Low Risk", "Moderate Risk", "High Risk"]
+    subtitle = {
+        "Low Risk": "Monitor",
+        "Moderate Risk": "Watchful follow-up",
+        "High Risk": "Refer",
+    }
+    active = risk_level if risk_level in order else "Moderate Risk"
+    segs = []
+    for lvl in order:
+        is_active = lvl == active
+        fill = f"background:{RISK_COLORS[lvl]};" if is_active else ""
+        cls = "risk-seg active" if is_active else "risk-seg"
+        segs.append(
+            f"<div class='{cls}' style='{fill}'>{lvl.replace(' Risk', '')}"
+            f"<span class='lvl-sub'>{subtitle[lvl]}</span></div>"
+        )
+    return "<div class='risk-meter'>" + "".join(segs) + "</div>"
 
 
 def app_banner() -> None:
@@ -443,6 +503,7 @@ def predict_ml(child: dict, responses: dict, rater_type: str, model, meta) -> tu
 
 def render_result(result, ml_risk: str, ml_probs: dict, child: dict, rater_type: str) -> None:
     st.markdown("### Screening result")
+    st.markdown(risk_meter(result.risk_level), unsafe_allow_html=True)
     m1, m2, m3, m4 = st.columns(4)
     m1.metric("Rule-based risk", result.risk_level)
     m2.metric("ML model risk", ml_risk)
@@ -615,7 +676,7 @@ def render_screening_hero(rater_type: str) -> None:
     chips = [
         ("&#9201;", "10&ndash;15 minutes"),
         ("&#9776;", f"{m['items']} items"),
-        ("&#128274;", "Initials only &mdash; no name stored"),
+        ("&#128274;", "Initials only - no name stored"),
         ("&#128198;", "Rate the last 6 months"),
     ]
     chip_html = "".join(
@@ -658,7 +719,7 @@ def run_screening_page(rater_type: str) -> None:
     render_screening_hero(rater_type)
 
     _step(1, "About the child",
-          "No name is stored — initials only, plus an anonymous Study ID.")
+          "No name is stored - initials only, plus an anonymous Study ID.")
     child_input = render_demographics_block(key_prefix=rater_type.lower())
     rater_contact = st.text_input(
         f"{rater_type} contact (optional)",

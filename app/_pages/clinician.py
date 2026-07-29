@@ -32,7 +32,7 @@ from src import database as db                                  # noqa: E402
 from src.scoring import cross_informant_agreement, score        # noqa: E402
 
 # Server-side gate: hide the dashboard from anyone who isn't a verified
-# Clinician — even if they bookmark or guess the /clinician URL.
+# Clinician - even if they bookmark or guess the /clinician URL.
 if current_role() != ROLE_CLINICIAN or not is_clinician_authed():
     st.error("Clinician access required. Returning you to Home.")
     st.switch_page("_pages/home.py")

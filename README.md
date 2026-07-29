@@ -1,20 +1,20 @@
 # Early Detection of ADHD in the Nigerian Population Using AI
 
-Master's Capstone Research Project — **ADHD Screening & Referral Support Tool** (non-diagnostic) for Nigerian pediatric demographics, ages 4–15.
+Master's Capstone Research Project - **ADHD Screening & Referral Support Tool** (non-diagnostic) for Nigerian pediatric demographics, ages 4–15.
 
-> **Screening, not diagnosis.** This tool assists overloaded pediatricians by triaging children before specialist consultation. It is built specifically for the Nigerian healthcare context — every state + FCT is covered in the referral directory.
+> **Screening, not diagnosis.** This tool assists overloaded pediatricians by triaging children before specialist consultation. It is built specifically for the Nigerian healthcare context - every state + FCT is covered in the referral directory.
 
 ## What's in this app
 
-- **Vanderbilt-style questionnaire** (NICHQ-aligned, public domain) — Parent form (47 items) and Teacher form (35 items).
+- **Vanderbilt-style questionnaire** (NICHQ-aligned, public domain) - Parent form (47 items) and Teacher form (35 items).
 - **DSM-5 18 core symptoms** (9 inattention + 9 hyperactivity/impulsivity) plus performance impairment (8 items) and brief ODD/anxiety screens.
 - **Rule-based DSM-5 scoring** as the authoritative result, with a **Random Forest** ML second opinion for calibration.
-- **Cross-informant agreement** — flag where parent and teacher disagree (clinically meaningful signal).
-- **Multi-rater roles** — Parent, Teacher, and Clinician workflows on separate pages.
-- **Auto-routed Nigerian referrals** — every state + FCT mapped to nearest tertiary mental-health facility (Federal Neuro-Psychiatric Hospitals, Federal Teaching Hospitals, State Teaching Hospitals).
-- **Clinician PDF export** — downloadable report the parent can carry to the appointment.
-- **Local SQLite persistence** — child profiles + longitudinal screening sessions, no cloud, offline-friendly.
-- **i18n scaffolding** — English ships today; YO / IG / HA translation slots ready.
+- **Cross-informant agreement** - flag where parent and teacher disagree (clinically meaningful signal).
+- **Multi-rater roles** - Parent, Teacher, and Clinician workflows on separate pages.
+- **Auto-routed Nigerian referrals** - every state + FCT mapped to nearest tertiary mental-health facility (Federal Neuro-Psychiatric Hospitals, Federal Teaching Hospitals, State Teaching Hospitals).
+- **Clinician PDF export** - downloadable report the parent can carry to the appointment.
+- **Local SQLite persistence** - child profiles + longitudinal screening sessions, no cloud, offline-friendly.
+- **i18n scaffolding** - English ships today; YO / IG / HA translation slots ready.
 
 ## Project layout
 
@@ -86,9 +86,9 @@ streamlit run app/streamlit_app.py
 
 Open the printed URL (typically <http://localhost:8501>) and pick a role:
 
-- **Parent Screening** — fill the home-context form; receive a Study ID.
-- **Teacher Screening** — enter the Study ID, fill the classroom-context form; the system pairs the two ratings.
-- **Clinician Dashboard** — search by Study ID, view cross-informant agreement, download PDF.
+- **Parent Screening** - fill the home-context form; receive a Study ID.
+- **Teacher Screening** - enter the Study ID, fill the classroom-context form; the system pairs the two ratings.
+- **Clinician Dashboard** - search by Study ID, view cross-informant agreement, download PDF.
 
 ## Open the original capstone notebook
 
@@ -102,7 +102,7 @@ The notebook is preserved as the original Steps 1–9 capstone artifact (kept fo
 
 | Risk | Symptoms endorsed (Often or Very Often) | Impairment | Action |
 |------|----------------------------------------|------------|--------|
-| **Low** | < 3 in both subscales | — | Standard pediatric guidance |
+| **Low** | < 3 in both subscales | - | Standard pediatric guidance |
 | **Moderate** | 3–5 in either subscale, OR ≥6 without impairment | < 2 impaired areas | Watchful monitoring, follow-up in 3–6 months |
 | **High** | ≥ 6 in either subscale | ≥ 2 impaired areas | Immediate referral to the routed Nigerian teaching hospital |
 
@@ -115,7 +115,7 @@ All 36 Nigerian states + FCT mapped to nearest tertiary mental-health facility. 
 3. State Teaching Hospital.
 4. Falls back to nearest hospital in the same geopolitical zone if none in-state.
 
-## Clinician access — onboarding & revocation
+## Clinician access - onboarding & revocation
 
 Clinicians access the dashboard via a **personal access code** (e.g. `dr-adekoya-7a3b9c`). Each code maps to a named clinician; every action they take in the dashboard is logged with their name in an audit table.
 

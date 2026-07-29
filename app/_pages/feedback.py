@@ -51,12 +51,12 @@ st.markdown(
     "<b>Tell us how this tool is working for you.</b><br>"
     "<span style='color:#57534e;'>Your feedback shapes how this screening tool develops. "
     "Nothing you write here is linked to a child, a Study ID, or any screening result "
-    "&mdash; it is stored anonymously.</span>"
+    " - it is stored anonymously.</span>"
     "</div>",
     unsafe_allow_html=True,
 )
 
-# Pre-select the role the visitor is already using, but let them override it —
+# Pre-select the role the visitor is already using, but let them override it - 
 # someone browsing without a role set should still be able to identify themselves.
 _role = current_role()
 _role_index = ROLES.index(_role) if _role in ROLES else 0

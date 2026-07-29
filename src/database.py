@@ -317,7 +317,7 @@ def save_feedback(
 ) -> int:
     """Store one feedback submission. `message` is the only required field.
 
-    Nothing here is linked to a child or a screening session — feedback is
+    Nothing here is linked to a child or a screening session - feedback is
     deliberately anonymous. `contact` is the sole piece of PII and is only
     present when the user volunteered it to get a reply.
     """

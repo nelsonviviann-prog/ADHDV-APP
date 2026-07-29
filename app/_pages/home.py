@@ -1,4 +1,4 @@
-"""Home page — banner, role chooser, clinician passcode gate, and the
+"""Home page - banner, role chooser, clinician passcode gate, and the
 educational overview that's safe to show every visitor."""
 
 from __future__ import annotations
@@ -155,7 +155,7 @@ if role is None:
 
 
 # ---------------------------------------------------------------------------
-# 2. Clinician picked role but not yet verified — show passcode prompt
+# 2. Clinician picked role but not yet verified - show passcode prompt
 # ---------------------------------------------------------------------------
 elif role == ROLE_CLINICIAN and not is_clinician_authed():
     st.markdown("### Clinician access")
@@ -181,7 +181,7 @@ elif role == ROLE_CLINICIAN and not is_clinician_authed():
         with col_a:
             submit = st.form_submit_button("Sign in", type="primary")
         with col_b:
-            cancel = st.form_submit_button("Cancel — pick a different role")
+            cancel = st.form_submit_button("Cancel - pick a different role")
 
     if cancel:
         clear_role()
@@ -190,7 +190,7 @@ elif role == ROLE_CLINICIAN and not is_clinician_authed():
     if submit:
         if verify_clinician(pw):
             st.session_state["_just_picked_role"] = ROLE_CLINICIAN
-            st.success("Verified — opening Clinician Dashboard...")
+            st.success("Verified - opening Clinician Dashboard...")
             st.rerun()
         else:
             st.error("That code isn't on file. Check the code with the deployment owner, "
@@ -206,7 +206,7 @@ elif role == ROLE_CLINICIAN and not is_clinician_authed():
 
 
 # ---------------------------------------------------------------------------
-# 3. Role chosen — short welcome + jump-back link
+# 3. Role chosen - short welcome + jump-back link
 # ---------------------------------------------------------------------------
 else:
     target = {
@@ -215,7 +215,7 @@ else:
         ROLE_CLINICIAN: ("_pages/clinician.py", "Open the Clinician Dashboard →"),
     }[role]
 
-    st.markdown(f"### Welcome — you're using the **{role}** view")
+    st.markdown(f"### Welcome - you're using the **{role}** view")
     st.markdown(
         "<p style='color:#57534e;'>Use the sidebar to navigate, or jump straight in:</p>",
         unsafe_allow_html=True,
@@ -224,7 +224,7 @@ else:
 
 
 # ---------------------------------------------------------------------------
-# Educational overview — visible to everyone, regardless of role state
+# Educational overview - visible to everyone, regardless of role state
 # ---------------------------------------------------------------------------
 st.markdown("<div style='height:36px'></div>", unsafe_allow_html=True)
 st.divider()
@@ -235,14 +235,14 @@ with left:
     st.markdown("### How the screening works")
     st.markdown(
         """
-        1. **Demographics** — age, gender, school level, state of residence.
-        2. **18 DSM-5 core symptoms** — 9 inattention + 9 hyperactivity / impulsivity.
-        3. **Performance impairment** — 8 areas of academic / social functioning.
-        4. **Co-occurring symptoms** — brief ODD and anxiety/mood screen.
-        5. **Risk level** — rule-based (DSM-5) + Random Forest ML second opinion.
-        6. **Referral** — auto-routed to nearest Nigerian teaching hospital with
+        1. **Demographics** - age, gender, school level, state of residence.
+        2. **18 DSM-5 core symptoms** - 9 inattention + 9 hyperactivity / impulsivity.
+        3. **Performance impairment** - 8 areas of academic / social functioning.
+        4. **Co-occurring symptoms** - brief ODD and anxiety/mood screen.
+        5. **Risk level** - rule-based (DSM-5) + Random Forest ML second opinion.
+        6. **Referral** - auto-routed to nearest Nigerian teaching hospital with
            a child & adolescent mental health unit.
-        7. **PDF report** — downloadable, designed for the parent to carry to
+        7. **PDF report** - downloadable, designed for the parent to carry to
            the referral appointment.
         """
     )

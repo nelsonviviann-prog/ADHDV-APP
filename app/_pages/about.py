@@ -38,7 +38,7 @@ st.markdown(
         </div>
         <h2 style="font-family:Georgia,'Times New Roman',serif; font-weight:700;
                    font-size:29px; line-height:1.2; margin:0 0 12px 0; color:#fafaf9;">
-            How this tool works &mdash; and where it stops
+            How this tool works - and where it stops
         </h2>
         <div style="font-size:15px; opacity:0.88; line-height:1.6; max-width:640px;">
             A screening and referral support tool for the Nigerian pediatric
@@ -95,7 +95,7 @@ st.markdown(
         <b>This is a screening tool, not a diagnostic one.</b> It assists
         overloaded pediatricians by triaging children before a full clinical
         consultation. A diagnosis of ADHD requires direct evaluation by a
-        qualified child psychiatrist or pediatrician &mdash; and nothing shown
+        qualified child psychiatrist or pediatrician - and nothing shown
         anywhere in this app substitutes for that.
       </div>
     </div>
@@ -120,19 +120,19 @@ with tab_risk:
     st.write(
         "A symptom counts as **endorsed** only when a rater marks it *Often* or "
         "*Very Often*. DSM-5 also requires that symptoms actually **impair** the "
-        "child's functioning — which is why symptom count alone never reaches High Risk."
+        "child's functioning - which is why symptom count alone never reaches High Risk."
     )
 
     LEVELS = [
         ("Low Risk", "#166534", "#ecfdf5", "#bbf7d0",
          "Fewer than 3 endorsed symptoms.",
-         "Healthy Development — standard guidance, no referral."),
+         "Healthy Development - standard guidance, no referral."),
         ("Moderate Risk", "#b45309", "#fffbeb", "#fde68a",
          "6+ symptoms but little impairment, <b>or</b> 3&ndash;5 symptoms.",
-         "Watchful Monitoring — talk to teachers, check vision &amp; hearing, re-screen in 3&ndash;6 months."),
+         "Watchful Monitoring - talk to teachers, check vision &amp; hearing, re-screen in 3&ndash;6 months."),
         ("High Risk", "#991b1b", "#fef2f2", "#fecaca",
          "6+ endorsed symptoms in a subscale <b>and</b> 2+ impaired performance areas.",
-         "Immediate Referral — tertiary facilities listed, IEP recommended at school."),
+         "Immediate Referral - tertiary facilities listed, IEP recommended at school."),
     ]
     for name, colour, bg, border, rule, action in LEVELS:
         st.markdown(
@@ -171,7 +171,7 @@ with tab_form:
         st.markdown(
             f"""
             <div class='info-card' style='border-left-color:{NAVY};'>
-              <b style='color:{NAVY};'>👪 Parent / Caregiver — 47 items</b>
+              <b style='color:{NAVY};'>👪 Parent / Caregiver - 47 items</b>
               <ul style='margin:8px 0 0 -12px; color:#44403c; font-size:14px; line-height:1.7;'>
                 <li>18 DSM-5 core symptoms</li>
                 <li>8 home &amp; academic performance items</li>
@@ -186,7 +186,7 @@ with tab_form:
         st.markdown(
             f"""
             <div class='info-card' style='border-left-color:#7c2d12;'>
-              <b style='color:#7c2d12;'>🏫 Teacher — 35 items</b>
+              <b style='color:#7c2d12;'>🏫 Teacher - 35 items</b>
               <ul style='margin:8px 0 0 -12px; color:#44403c; font-size:14px; line-height:1.7;'>
                 <li>the same 18 DSM-5 core symptoms</li>
                 <li>8 classroom-context performance items</li>
@@ -200,7 +200,7 @@ with tab_form:
     st.markdown("#### Why ask two people about one child?")
     st.write(
         "Because ADHD frequently presents in only one setting. A child may cope "
-        "in a quiet home and struggle in a class of forty — or the reverse. The "
+        "in a quiet home and struggle in a class of forty - or the reverse. The "
         "tool scores both raters, reports their agreement, and lets the **higher** "
         "rating drive the referral decision. Disagreement is a finding, not an error."
     )
@@ -218,7 +218,7 @@ with tab_world:
               <b>🇺🇸 United States</b>
               <p style='color:#44403c; font-size:14px; margin-top:8px;'>
                 The Vanderbilt scale is used by roughly <b>80% of US pediatricians</b>
-                — because it is free, public domain, DSM-aligned, and has parallel
+ - because it is free, public domain, DSM-aligned, and has parallel
                 parent and teacher forms. Conners 3 is the proprietary alternative;
                 it emphasises multi-informant agreement.
               </p>
@@ -242,7 +242,7 @@ with tab_world:
                 child psychiatry unit.
               </p>
               <p style='color:#57534e; font-size:13px; margin-bottom:0;'>
-                <b>We took:</b> the auto-routing model — mapped onto Nigeria's
+                <b>We took:</b> the auto-routing model - mapped onto Nigeria's
                 Federal Neuro-Psychiatric, Federal Teaching, and State Teaching
                 hospitals, by state of residence.
               </p>
@@ -254,7 +254,7 @@ with tab_world:
     st.markdown(
         f"""
         <div class='info-card' style='border-left-color:{AMBER};'>
-          <b>🇳🇬 Nigeria — what is different here</b>
+          <b>🇳🇬 Nigeria - what is different here</b>
           <p style='color:#44403c; font-size:14px; margin-top:8px; margin-bottom:0;'>
             Built for all 36 states and the FCT. <b>Offline-first</b>, because
             power and connectivity are not guaranteed: SQLite storage, the model
@@ -275,7 +275,7 @@ with tab_bias:
         <div class='info-card' style='border-left-color:{AMBER};'>
           <b>Girls with ADHD are under-diagnosed.</b>
           <p style='color:#44403c; font-size:14px; margin-top:8px; margin-bottom:0;'>
-            ADHD prevalence is traditionally reported higher in boys — but a
+            ADHD prevalence is traditionally reported higher in boys - but a
             growing body of evidence shows that <b>inattentive-type ADHD in girls
             is missed</b>, because girls tend to present with quiet
             distractibility rather than disruptive hyperactivity. A model trained
@@ -294,7 +294,7 @@ with tab_bias:
     st.markdown("#### The machine never gets the last word")
     st.write(
         "The rule-based DSM-5 score is **always shown next to** the ML prediction. "
-        "If the two disagree, **the rule-based result is authoritative** — the ML "
+        "If the two disagree, **the rule-based result is authoritative** - the ML "
         "score is a calibration aid, not a black-box override. A clinician can see "
         "the reasoning instead of being handed an unexplained verdict."
     )
@@ -338,7 +338,7 @@ with tab_privacy:
 
     st.write(
         "All data sits in a local SQLite database. The trained Random Forest and "
-        "its metadata are small `.joblib` artifacts — the whole payload is light "
+        "its metadata are small `.joblib` artifacts - the whole payload is light "
         "enough for a low-spec Android device. Screening works in clinics with "
         "intermittent power and no connectivity."
     )
@@ -349,15 +349,15 @@ with tab_next:
     st.markdown("#### Scaling roadmap")
     ROADMAP = [
         ("Translations", "Yoruba, Igbo and Hausa. The i18n scaffold is already in "
-                         "place — only the translation strings are missing."),
+                         "place - only the translation strings are missing."),
         ("Offline mobile PWA", "Wrap the app into an installable PWA so primary "
                                "health workers can screen from their own phones."),
         ("Referral confirmation loop", "Hospitals confirm the appointment back "
                                        "against the Study ID, so the dashboard can "
                                        "track the funnel from screening → specialist "
                                        "→ diagnosis."),
-        ("Anonymised research export", "One-click CSV of all sessions — "
-                                       "demographics and risk levels, no PII — for "
+        ("Anonymised research export", "One-click CSV of all sessions - "
+                                       "demographics and risk levels, no PII - for "
                                        "academic research under IRB approval."),
         ("Model recalibration", "Once real Nigerian-population data exists, retrain "
                                 "without touching the rest of the pipeline. The "
@@ -391,7 +391,7 @@ with tab_refs:
           Diagnosis, Evaluation, and Treatment of ADHD in Children and Adolescents.*
         - Wolraich ML et al. *NICHQ Vanderbilt Assessment Scale.* American Academy
           of Pediatrics & National Initiative for Children's Healthcare Quality.
-        - American Psychiatric Association. *DSM-5* — Attention-Deficit/Hyperactivity
+        - American Psychiatric Association. *DSM-5* - Attention-Deficit/Hyperactivity
           Disorder diagnostic criteria.
         - Su YE et al. *Validation of the Chinese SNAP-IV.*
         - Federal Ministry of Health, Nigeria. *Mental Health Service Delivery
@@ -401,6 +401,6 @@ with tab_refs:
     st.caption(
         "Hospital directory compiled from the Federal Ministry of Health hospital "
         "register and the MDCN accredited teaching-hospital list. Phone numbers are "
-        "deliberately omitted — they change often, and wrong clinical contact "
+        "deliberately omitted - they change often, and wrong clinical contact "
         "details are dangerous."
     )

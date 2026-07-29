@@ -1,5 +1,5 @@
 """
-ADHD Screening & Referral Support Tool — entry point.
+ADHD Screening & Referral Support Tool - entry point.
 
 Uses `st.navigation()` to build a *role-gated* sidebar:
 

@@ -247,7 +247,7 @@ st.markdown(
 
 if not consultant and not is_closed:
     st.info(
-        "Your payment is confirmed. A clinician will join shortly — you can "
+        "Your payment is confirmed. A clinician will join shortly - you can "
         "write your question now and they will see it when they open the thread."
     )
 

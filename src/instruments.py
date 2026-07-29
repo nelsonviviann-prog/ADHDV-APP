@@ -53,7 +53,7 @@ HYPERACTIVITY_QUESTIONS = [
 ]
 
 # ---------------------------------------------------------------------------
-# Co-occurring screens (brief, not diagnostic — flag for referral only).
+# Co-occurring screens (brief, not diagnostic - flag for referral only).
 # ---------------------------------------------------------------------------
 
 ODD_QUESTIONS = [
@@ -70,7 +70,7 @@ ANXIETY_QUESTIONS = [
 ]
 
 # ---------------------------------------------------------------------------
-# Performance/impairment items — wording differs between parent and teacher.
+# Performance/impairment items - wording differs between parent and teacher.
 # Scored 1 (Excellent) to 5 (Problematic). Vanderbilt-aligned.
 # ---------------------------------------------------------------------------
 
